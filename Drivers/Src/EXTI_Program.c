@@ -117,11 +117,13 @@ void EXTI_voidSetTriggerSelection(EXTI_LINE_t Local_u8Line, TRIG_SELECT_t Local_
     {
         /* Set Rising Trigger Selection */
         EXTI->RTSR |= (1 << Local_u8Line);
+        EXTI->FTSR &= (~(1<<Local_u8Line));
     }
     else if (Local_u8TriggerSelection == FALLING_TRG)
     {
         /* Set Falling Trigger Selection */
         EXTI->FTSR |= (1 << Local_u8Line);
+        EXTI->RTSR &= (~(1<<Local_u8Line));
     }
     else if (Local_u8TriggerSelection == ON_CHANGE_TRG)
     {
