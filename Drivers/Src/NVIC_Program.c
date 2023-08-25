@@ -17,8 +17,8 @@
  * INCLUDES SECTION START
  *==============================================================================================================================================*/
 #include <stdint.h>
-#include "../Inc/STM32F446xx.h"
-#include "../Inc/ErrTypes.h"
+#include "../../Library/STM32F446xx.h"
+#include "../../Library/ErrTypes.h"
 
 #include "../Inc/NVIC_Interface.h"
 #include "../Inc/NVIC_Private.h"
