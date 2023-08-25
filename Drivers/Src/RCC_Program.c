@@ -1,7 +1,7 @@
 #include <stdint.h>
-#include "../../../LIB/STM32F446.h"
-#include "../include/RCC_Interface.h"
-#include "../include/RCC_Private.h"
+#include "../../Library/STM32F446xx.h"
+#include "../Inc/RCC_Interface.h"
+#include "../Inc/RCC_Private.h"
 
 /*
  * Prototype   : uint8_t RCC_setCLKStatus(uint8_t CLK_TYPE ,uint8_t Status)
@@ -18,12 +18,12 @@ uint8_t RCC_setCLKStatus(RCC_CLK_TYPE CLK_TYPE, RCC_CLK_STATUS Status)
     case HSI:
         if (Status == CLK_ON)
         {
-            RCC->CR |= (1 << HSION);
-            while ((RCC->CR &(1<< HSIRDY)) == 0)  ;
+            RCC->CR |= (1 << CR_HSION);
+            while ((RCC->CR &(1<< CR_HSIRDY)) == 0)  ;
         }
         else if (Status == CLK_OFF)
         {
-            RCC->CR &= ~(1 << HSION);
+            RCC->CR &= ~(1 << CR_HSION);
         }
         else
         {
@@ -33,12 +33,12 @@ uint8_t RCC_setCLKStatus(RCC_CLK_TYPE CLK_TYPE, RCC_CLK_STATUS Status)
     case HSE:
         if (Status == CLK_ON)
         {
-            RCC->CR |= (1 << HSEON);
-           while ((RCC->CR &(1<< HSERDY)) == 0)  ;
+            RCC->CR |= (1 << CR_HSEON);
+           while ((RCC->CR &(1<< CR_HSERDY)) == 0)  ;
         }
         else if (Status == CLK_OFF)
         {
-            RCC->CR &= ~(1 << HSEON);
+            RCC->CR &= ~(1 << CR_HSEON);
         }
         else
         {
@@ -47,12 +47,12 @@ uint8_t RCC_setCLKStatus(RCC_CLK_TYPE CLK_TYPE, RCC_CLK_STATUS Status)
     case PLL_MAIN:
         if (Status == CLK_ON)
         {
-            RCC->CR |= (1 << PLLON);
-          while ((RCC->CR &(1<< PLLRDY)) == 0)  ;
+            RCC->CR |= (1 << CR_PLLON);
+          while ((RCC->CR &(1<< CR_PLLRDY)) == 0)  ;
         }
         else if (Status == CLK_OFF)
         {
-            RCC->CR &= ~(1 << PLLON);
+            RCC->CR &= ~(1 << CR_PLLON);
         }
         else
         {
@@ -74,8 +74,8 @@ uint8_t RCC_setCLKStatus(RCC_CLK_TYPE CLK_TYPE, RCC_CLK_STATUS Status)
  */
 void RCC_SetSYSCLK(SYSCLK_SRC SYS_CLK_TYPE)
 {
-    RCC->CFGR &= ~(TWO_BIT_MASKING << SW);
-     RCC->CFGR |= (SYS_CLK_TYPE << SW);
+    RCC->CFGR &= ~(TWO_BIT_MASKING << CFGR_SW);
+     RCC->CFGR |= (SYS_CLK_TYPE << CFGR_SW);
 }
 /*
  * Prototype   : void RCC_HSEConfig(HSE_CONFIG * HSE_USERCONFIG)
@@ -86,8 +86,8 @@ void RCC_SetSYSCLK(SYSCLK_SRC SYS_CLK_TYPE)
  */
 void RCC_HSEConfig(RCC_HSE_CONFIG HSE_USERCONFIG)
 {
-    RCC->CR &= ~(ONE_BIT_MASKING << HSEBYP);
-     RCC->CR |= (HSE_USERCONFIG << HSEBYP);
+    RCC->CR &= ~(ONE_BIT_MASKING << CR_HSEBYP);
+     RCC->CR |= (HSE_USERCONFIG << CR_HSEBYP);
 }
 /*
  * Prototype   : void RCC_PLLConfig(PLL_CONFIG * PLL_USERCONFIG)
@@ -99,12 +99,12 @@ void RCC_HSEConfig(RCC_HSE_CONFIG HSE_USERCONFIG)
 void RCC_PLLConfig(RCC_PLL_CONFIG_t * PLL_USERCONFIG)
 {
 	RCC->PLLCFGR &=~(0x7F437FFF);
-RCC ->PLLCFGR |= (PLL_USERCONFIG->PLLM_FACTOR << PLLM);
-RCC ->PLLCFGR |= (PLL_USERCONFIG->PLLN_FACTOR << PLLN);
-RCC ->PLLCFGR |= (PLL_USERCONFIG->PLLP_FACTOR << PLLP);
-RCC ->PLLCFGR |= (PLL_USERCONFIG->PLLQ_FACTOR << PLLQ);
-RCC ->PLLCFGR |= (PLL_USERCONFIG->PLLR_FACTOR << PLLR);
-RCC ->PLLCFGR |= (PLL_USERCONFIG->PLL_SRC << PLLSRC);
+RCC ->PLLCFGR |= (PLL_USERCONFIG->PLLM_FACTOR << PLLCFGR_PLLM);
+RCC ->PLLCFGR |= (PLL_USERCONFIG->PLLN_FACTOR << PLLCFGR_PLLN);
+RCC ->PLLCFGR |= (PLL_USERCONFIG->PLLP_FACTOR << PLLCFGR_PLLP);
+RCC ->PLLCFGR |= (PLL_USERCONFIG->PLLQ_FACTOR << PLLCFGR_PLLQ);
+RCC ->PLLCFGR |= (PLL_USERCONFIG->PLLR_FACTOR << PLLCFGR_PLLR);
+RCC ->PLLCFGR |= (PLL_USERCONFIG->PLL_SRC << PLLCFGR_PLLSRC);
 }
 void RCC_AHB1EnableCLK(RCC_AHB1ENR_BITS_t Prephiral)
 {
