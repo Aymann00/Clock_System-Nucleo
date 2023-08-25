@@ -15,10 +15,10 @@
  *
  *******************************************************************************/
 #include <stdint.h>
-#include "../../../LIB/STM32F446.h"
-#include "../../../LIB/ErrorType.h"
-#include "../Include/EXTI_Interface.h"
-#include "../Include/EXTI_Private.h"
+#include "../../Library/STM32F446xx.h"
+#include "../../Library/ErrTypes.h"
+#include "../Inc/EXTI_Interface.h"
+#include "../Inc/EXTI_Private.h"
 
 static void (*EXTI_PTR_TO_FUNCTION[23])(void) = {NULL};
 /*==============================================================================================================================================
