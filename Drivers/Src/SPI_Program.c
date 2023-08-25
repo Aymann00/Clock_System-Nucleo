@@ -19,8 +19,8 @@
 
 #include <stdint.h>
 
-#include "../../../LIB/ErrType.h"
-#include "../../../LIB/STM32F446xx.h"
+#include "../../Library/ErrTypes.h"
+#include "../../Library/STM32F446xx.h"
 
 #include "../Inc/SPI_Interface.h"
 #include "../Inc/SPI_Private.h"
