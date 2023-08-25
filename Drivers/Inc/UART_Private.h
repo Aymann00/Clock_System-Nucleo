@@ -16,6 +16,17 @@
  *******************************************************************************/
 #ifndef UART_INCLUDE_UART_PRIVATE_H_
 #define UART_INCLUDE_UART_PRIVATE_H_
+
+/*==============================================================================================================================================
+ *@fn    UART_HANDLE_IT
+ *@brief  This function is used to Handle Interrupts
+ *@paramter[in] UARTNumber : UART Number Needed To Be Handled
+ *@retval void
+ *@note  This Function is Private
+ *==============================================================================================================================================*/
+static void UART_HANDLE_IT( UART_ID_t UARTNumber );
+
+
 #define UARTNUMBER 6
 #define Clock_Freq 16000000UL
 #define FlagsNumber 10
