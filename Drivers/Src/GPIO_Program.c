@@ -19,8 +19,8 @@
  *==============================================================================================================================================*/
 #include <stdint.h>
 
-#include "../Inc/ErrTypes.h"
-#include "../Inc/STM32F446xx.h"
+#include "../../Library/ErrTypes.h"
+#include "../../Library/STM32F446xx.h"
 
 
 #include "../Inc/GPIO_Interface.h"
