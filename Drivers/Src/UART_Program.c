@@ -19,10 +19,10 @@
  * Includes
  *==============================================================================================================================================*/
 #include <stdint.h>
-#include "../../../LIB/STM32F446.h"
-#include "../../../LIB/ErrorType.h"
-#include "../Include/UART_Interface.h"
-#include "../Include/UART_Private.h"
+#include "../../Library/STM32F446xx.h"
+#include "../../Library/ErrTypes.h"
+#include "../Inc/UART_Interface.h"
+#include "../Inc/UART_Private.h"
 
 /*==============================================================================================================================================
  * GLOBAL VARIABLES SECTION
