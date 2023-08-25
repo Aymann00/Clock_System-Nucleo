@@ -95,7 +95,7 @@ typedef enum
 {
 	PE_Flage = 0, /* Parity Error Flag*/
 	FE_Flage,	  /* Framing Error Flag*/
-	NE_Flage,	  /* Noise Error Flag*/
+	NF_Flage,	  /* Noise Error Flag*/
 	ORE_Flage,	  /* OverRun Error Flag*/
 	IDLE_Flage,	  /* IDLE Line Detected Flag*/
 	RXNE_Flage,	  /* Read Data Register Not Empty Flag*/
