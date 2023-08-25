@@ -18,8 +18,8 @@
  *==============================================================================================================================================*/
 #include <stdint.h>
 
-#include "STM32F446xx.h"
-#include "../Inc/ErrTypes.h"
+#include "../../Library/STM32F446xx.h"
+#include "../../Library/ErrTypes.h"
 
 #include "../Inc/DMA_Interface.h"
 #include "../Inc/DMA_Private.h"
