@@ -20,10 +20,10 @@
  * ================================================================= */
 #include <stdint.h>
 
-#include "ErrTypes.h"
-#include "STM32F446xx.h"
+#include "../../Library/ErrTypes.h"
+#include "../../Library/STM32F446xx.h"
 
-#include "../Inc/I2C_Interface.h"
+#include "../../Drivers/Inc/I2C_Interface.h"
 
 #include "../Inc/DS1307_Interface.h"
 #include "../Inc/DS1307_Private.h"
