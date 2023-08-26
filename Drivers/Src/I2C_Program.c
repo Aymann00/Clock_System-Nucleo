@@ -6,12 +6,12 @@
 
 /******************* MAIN INCLUDES *********************/
 #include <stdint.h>
-#include "STM32F446xx.h"
-#include "ErrTypes.h"
+#include "../../Library/STM32F446xx.h"
+#include "../../Library/ErrTypes.h"
 
 
-#include "I2C_Interface.h"
-#include "I2C_Private.h"
+#include "../Inc/I2C_Interface.h"
+#include "../Inc/I2C_Private.h"
 /*******************************************************/
 
 

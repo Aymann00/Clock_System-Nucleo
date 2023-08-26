@@ -7,11 +7,6 @@
 #ifndef I2C_INC_I2C_INTERFACE_H_
 #define I2C_INC_I2C_INTERFACE_H_
 
-/******************* MAIN INCLUDES *********************/
-#include <stdint.h>
-#include "ErrTypes.h"
-/*******************************************************/
-
 /************** MAIN USER DEFINED VARIABLES ************/
 typedef enum {
 	I2C_NUMBER_1,
