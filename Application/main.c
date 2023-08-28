@@ -21,36 +21,11 @@
 #include "../Library/ErrTypes.h"
 #include "../Library/STM32F446xx.h"
 
-#include "../Drivers/Inc/RCC_Interface.h"
-#include "../Drivers/Inc/GPIO_Interface.h"
-#include "../Drivers/Inc/NVIC_Interface.h"
-#include "../Drivers/Inc/SCB_Interface.h"
-#include "../Drivers/Inc/DMA_Interface.h"
-#include "../Drivers/Inc/EXTI_Interface.h"
-#include "../Drivers/Inc/SYSCFG_Interface.h"
-#include "../Drivers/Inc/I2C_Interface.h"
-#include "../Drivers/Inc/SPI_Interface.h"
-#include "../Drivers/Inc/UART_Interface.h"
-#include "../Drivers/Inc/SYSTICK_Interface.h"
-
-#include "../HAL/Inc/DS1307_Interface.h"
+#include "../Service/Inc/Service.h"
 
 /* ========================================================================= *
  *                        GLOBAL VARIABLES SECTION                           *
  * ========================================================================= */
-
-
-/* ========================================================================= *
- *                         PRIVATE MACROS SECTION                            *
- * ========================================================================= */
-
-
-
-/* ========================================================================= *
- *                      FUNCTIONS PROTOTYPES SECTION                         *
- * ========================================================================= */
-
-
 
 /* ========================================================================= *
  *                        MAIN APPLICATION SECTION                           *
@@ -59,22 +34,93 @@
 
 int main(void)
 {
+	/* Variable to Store the ID Sent From User */
+	uint8_t * ID_Ptr = NULL ;
 
-    /* Loop forever */
-	for(;;);
+	/* Variable to Store Password Sent From User */
+	uint8_t * Pass_Ptr = NULL ;
+
+	/* Choosen Option By the User From the Provided Options */
+	OPTIONS_t ChoosenOption = NO_OPTION ;
+
+	/* Enable Clock on Used Peripherals Only */
+	Clock_Init( ) ;
+
+	/* Set Pins Configurations */
+	Pins_Init( ) ;
+
+	/* NVIC Interrupts Configuration */
+	Interrupts_Init( ) ;
+
+	/* Initialize USART2 */
+	USART2_Init( ) ;
+
+	/* Initialize SPI1 */
+	SPI1_Init( ) ;
+
+	/* Receive ID From User */
+	ID_Ptr = ID_Reception( ) ;
+
+	/* Receive Password From User */
+	Pass_Ptr = Pass_Reception( ) ;
+
+	/* Check on Login Info Passing ID , Password & Number of Allowed Tries
+	 *   Program Exits This Function Only If Login Info is Correct , IF Not Function will Force
+	 *   An SPI Data Transfer & Stuck Inside SPI Call Back in the Background
+	 */
+	Check_LoginInfo(ID_Ptr, Pass_Ptr, NUM_OF_TRIES ) ;
+
+	while ( 1 )
+	{
+		/* Display the Menu of Options if Login Info is Correct
+		 * Else Stuck in the Call Back Function
+		 */
+		ChoosenOption = Display_Menu(  ) ;
+
+		/* Switch on the Chossen Option */
+		switch ( ChoosenOption )
+		{
+
+		case DISPLAY_OPTION :
+
+			break ;
+
+		case SET_ALARM_OPTION :
+
+			break ;
+		case SET_DATE_TIME_OPTION :
+
+			break ;
+
+		default :
+
+			WRONG_OptionChoosen ( ) ;
+			continue ;
+
+		}
+
+		Check_IF_ContinueisNeeded( ) ;
+
+	}
+
 }
 
-/* ========================================================================= *
- *                    FUNCTIONS IMPLEMENTATION SECTION                       *
- * ========================================================================= */
 
+/* SPI CallBackFunction */
+
+void SPI_CallBackFunc( void )
+{
+   ShutDown_Sequence( ) ;
+}
 
 
 /************************ SOURCE REVISION LOG *********************************
  *
  *    Date    Version   Author             Description
  *  16/08/23   1.0.0   Mohamemd Ayman    Initial Release ( INCLUDES )
- *
+ *  27/08/23   1.0.1   Mohammed Ayman    Program Basic Functionality
+ *  28/08/23   1.1.0   Mohammed Ayman    Art Changes to Make Project More Prettier
+ *  28/08/23   1.1.1   Mohammed Ayman    Adding A Service Layer & Well Documenting the Application Layer
  *
  *
  *
