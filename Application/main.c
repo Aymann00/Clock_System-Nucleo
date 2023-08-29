@@ -94,11 +94,13 @@ int main(void)
 
 		default :
 
+			/* If User Passe a Wrong Option */
 			WRONG_OptionChoosen ( ) ;
 			continue ;
 
 		}
 
+		/* After the User Functionality is Done Check if User wants To Continue or Not */
 		Check_IF_ContinueisNeeded( ) ;
 
 	}
@@ -110,6 +112,7 @@ int main(void)
 
 void SPI_CallBackFunc( void )
 {
+	/* ShutDown Sequence Excecution */
    ShutDown_Sequence( ) ;
 }
 
