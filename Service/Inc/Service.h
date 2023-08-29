@@ -13,9 +13,25 @@
  *                         PRIVATE MACROS SECTION                            *
  * ========================================================================= */
 
-#define WRONG_DAY		8
-#define FIRST_TIME		1
-#define NOT_FIRST_TIME	0
+#define WRONG_DAY				8u
+#define FIRST_TIME				1u
+#define NOT_FIRST_TIME			0u
+#define CALENDER_FORMAT			23u
+
+#define FIRST_LETTER_OF_DAY		10u
+#define SECOND_LETTER_OF_DAY	11u
+#define THIRD_LETTER_OF_DAY		12u
+
+#define ZERO_ASCII				48u
+
+#define MAX_DATE				31u
+#define MAX_HOURS				23u
+#define MAX_MINUTES				59u
+#define MAX_SECONDS				59u
+#define MAX_MONTH				12u
+#define MAX_YEAR				99u
+
+
 
 /* ========================================================================= *
  *                      FUNCTIONS PROTOTYPES SECTION                         *
