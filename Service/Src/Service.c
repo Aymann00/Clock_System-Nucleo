@@ -52,7 +52,6 @@ void WRONG_OptionChoosen ( void )
 	SendNew_Line(  ) ;
 	USART_SendStringPolling( UART_CONFIG->UART_ID , "  Wrong Option , Enter Option (1-3) ") ;
 	/* delay & clear terminal */
-	DELAY_1s( ) ;
 	DELAY_500ms( ) ;
 	Clear_Terminal( ) ;
 
@@ -94,6 +93,9 @@ void Check_IF_ContinueisNeeded( void )
 
 void Check_LoginInfo( uint8_t * ID_Ptr , uint8_t * Pass_Ptr , uint8_t TriesNumber  )
 {
+	/* Data To Send Via SPI if Number of Tries is Finished */
+	uint16_t DATA_SENT_viaSPI = RED_LED_CODE ;
+
 	/* Variable to Hold Return of Function Checking on ID & Inverted Pass */
 	ID_PASS_EQUALITY_t ID_PASS_Relation = ID_NOEQUAL_INVERTED_PASS ;
 
@@ -137,7 +139,7 @@ void Check_LoginInfo( uint8_t * ID_Ptr , uint8_t * Pass_Ptr , uint8_t TriesNumbe
 	if( TriesNumber == 0 )
 	{
 		/* Send A Signal To Light Up the Red LED ON BluePill */
-		SPI_Transmit_IT(SPI_CONFIG, (uint16_t*) RED_LED_CODE , 1 , SPI_CallBackFunc ) ;
+		SPI_Transmit_IT(SPI_CONFIG, &DATA_SENT_viaSPI , 1 , SPI_CallBackFunc ) ;
 		/* Stuck in the Call Back Function */
 
 	}

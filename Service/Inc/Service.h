@@ -21,8 +21,11 @@
 
 #define CLEAR_TERMINAL    "\033\143"
 
-#define DELAY_1s()      SYSTICK_Delayms(1000)
-#define DELAY_500ms()   SYSTICK_Delayms(500)
+#define DELAY_1s()          for (uint16_t n = 1000 ; n > 0 ; n-- )\
+		                    for (uint16_t y = 0 ; y < 3195 ; y++ )
+
+#define DELAY_500ms()    for (uint16_t n = 500 ; n > 0 ; n-- )\
+						 for (uint16_t i = 0 ; i < 3195 ; i++ )
 
 #define ZERO_ASCII      48
 
