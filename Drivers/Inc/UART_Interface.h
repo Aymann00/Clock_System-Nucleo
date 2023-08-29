@@ -246,4 +246,12 @@ void UART_VoidEnableDMATransmit(UART_Config_t *UART_Config);
  *@retval void
  *==============================================================================================================================================*/
 void UART_VoidEnableDMAReciver(UART_Config_t *UART_Config);
+/*
+ * @function 		:	USART_SendStringPolling
+ * @brief			:	Send String using USART
+ * @param			:	String
+ * @retval			:	Error State
+ */
+Error_State_t USART_SendStringPolling(uint8_t USART_Num , const char* String);
+
 #endif /* UART_INCLUDE_UART_INTERFACE_H_ */

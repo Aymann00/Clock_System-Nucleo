@@ -22,11 +22,16 @@
 #include "../Library/STM32F446xx.h"
 
 #include "../Service/Inc/Service.h"
+#include "../Drivers/Inc/I2C_Interface.h"
+#include "../Drivers/Inc/UART_Interface.h"
+
+#include "../HAL/Inc/DS1307_Interface.h"
 
 /* ========================================================================= *
  *                        GLOBAL VARIABLES SECTION                           *
  * ========================================================================= */
-
+extern DS1307_Config_t Date_Time_RTC ;
+extern I2C_Configs_t _I2C1;
 /* ========================================================================= *
  *                        MAIN APPLICATION SECTION                           *
  * ========================================================================= */
@@ -36,10 +41,11 @@ int main(void)
 {
 	/* Variable to Store the ID Sent From User */
 	uint8_t * ID_Ptr = NULL ;
+	/*Error State Variable*/
+	Error_State_t	Receiving_State	=OK;
 
 	/* Variable to Store Password Sent From User */
 	uint8_t * Pass_Ptr = NULL ;
-
 	/* Choosen Option By the User From the Provided Options */
 	OPTIONS_t ChoosenOption = NO_OPTION ;
 
@@ -89,7 +95,30 @@ int main(void)
 
 			break ;
 		case SET_DATE_TIME_OPTION :
-
+		while(1)
+		{
+		/*Read the settled time and date from PC terminal*/
+		Receiving_State		=	ReadDateTime_FromPC();
+		/*Check The Error State*/
+		if (OK == Receiving_State)
+				{
+			
+			/*Receiving Calender from user is done Successfully*/
+			/*Write the Received Calender in the RTC Module*/
+			DS1307_WriteDateTime(&_I2C1, &Date_Time_RTC);
+			
+			/*Display message to user that the time settled successfully*/
+			USART_SendStringPolling(UART_2, "\nThe Given Time Settled successfully\n");
+			
+			/*Return to Main Menu*/
+			break;
+			}
+		else
+		{
+			/*Wrong Calender Received from User*/
+			USART_SendStringPolling(UART_2, "\nWrong Date or Time is Given , Please Try Again\n");
+		}
+		}
 			break ;
 
 		default :

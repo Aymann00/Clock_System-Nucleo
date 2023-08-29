@@ -296,40 +296,39 @@ void UART_voidRecieveBufferIT(UART_Config_t *UART_Config, uint16_t *Copy_p8Buffe
 void UART_voidTransmitBufferIT(UART_Config_t *UART_Config, uint16_t *Copy_p8Buffer, uint16_t Copy_u8BufferSize);
 
 /*
-
-@function         :    USART_SendStringPolling
-@brief            :    Send String using USART
-@param            :    String
-@retval            :    Error State
-*/
+ * @function 		:	USART_SendStringPolling
+ * @brief			:	Send String using USART
+ * @param			:	String
+ * @retval			:	Error State
+ */
 Error_State_t USART_SendStringPolling(uint8_t USART_Num , const char* String)
 {
-    Error_State_t Error_State = OK;
-    uint16_t Counter=0;
-    if (NULL != String)
-    {
-        while (String[Counter] != '\0')
-        {
-            if ((USART_Num >=  UART_1 ) && (USART_Num <= UART_6))
-            {
-                /* wait till DR is Empty */
-                while (!(GET_BIT(UART[USART_Num]->SR,TXE_Flage)));
-                /* Store data in the DR Register */
-                UART[USART_Num]->DR = String[Counter];
-                /* wait till Transmission is complete */
-                while (!(GET_BIT(UART[USART_Num]->SR,TC_Flage)));
-            }
-            else {
-                Error_State = USART_WRONG_NUMBER;
-                break;
-            }
-            Counter++;
-        }
-    }
-    else {
-        Error_State = Null_Pointer;
-    }
-    return Error_State ;
+	Error_State_t Error_State = OK;
+	uint16_t Counter=0;
+	if (NULL != String)
+	{
+		while (String[Counter] != '\0')
+		{
+			if ((USART_Num >= 0) && (USART_Num <= 5))
+			{
+				/*wait till DR is Empty*/
+				while (!(GET_BIT(UART[USART_Num]->SR,TXE_Flage)));
+				/*Store data in the DR Register*/
+				UART[USART_Num]->DR = String[Counter];
+				/*wait till Transmission is complete*/
+				while (!(GET_BIT(UART[USART_Num]->SR,TC_Flage)));
+			}
+			else {
+				Error_State = USART_WRONG_NUMBER;
+				break;
+			}
+			Counter++;
+		}
+	}
+	else {
+		Error_State = Null_Pointer;
+	}
+	return Error_State ;
 }
 /*==============================================================================================================================================
  *@fn    UART_HANDLE_IT
