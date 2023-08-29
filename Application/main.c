@@ -21,36 +21,17 @@
 #include "../Library/ErrTypes.h"
 #include "../Library/STM32F446xx.h"
 
-#include "../Drivers/Inc/RCC_Interface.h"
-#include "../Drivers/Inc/GPIO_Interface.h"
-#include "../Drivers/Inc/NVIC_Interface.h"
-#include "../Drivers/Inc/SCB_Interface.h"
-#include "../Drivers/Inc/DMA_Interface.h"
-#include "../Drivers/Inc/EXTI_Interface.h"
-#include "../Drivers/Inc/SYSCFG_Interface.h"
 #include "../Drivers/Inc/I2C_Interface.h"
-#include "../Drivers/Inc/SPI_Interface.h"
 #include "../Drivers/Inc/UART_Interface.h"
-#include "../Drivers/Inc/SYSTICK_Interface.h"
 
 #include "../HAL/Inc/DS1307_Interface.h"
 
+#include "../Service/Inc/Service.h"
 /* ========================================================================= *
  *                        GLOBAL VARIABLES SECTION                           *
  * ========================================================================= */
-
-
-/* ========================================================================= *
- *                         PRIVATE MACROS SECTION                            *
- * ========================================================================= */
-
-
-
-/* ========================================================================= *
- *                      FUNCTIONS PROTOTYPES SECTION                         *
- * ========================================================================= */
-
-
+extern DS1307_Config_t Date_Time_RTC ;
+extern I2C_Configs_t _I2C1;
 
 /* ========================================================================= *
  *                        MAIN APPLICATION SECTION                           *
@@ -59,17 +40,47 @@
 
 int main(void)
 {
+	/*Error State Variable*/
+	Error_State_t	Receiving_State	=OK;
 
-    /* Loop forever */
-	for(;;);
+	/*ENABLE Peripherals Clocks*/
+	Clock_Init();
+
+	/*Initialize PINs*/
+	Pins_Init();
+
+	/*Initialize Peripherals*/
+	Peripherals_Init();
+
+	/* Loop forever */
+	while (1)
+	{
+		/*Read the settled time and date from PC terminal*/
+		Receiving_State		=	ReadDateTime_FromPC();
+
+		/*Check The Error State*/
+		if (OK == Receiving_State)
+		{
+			/*Receiving Calender from user is done Successfully*/
+
+			/*Write the Received Calender in the RTC Module*/
+
+			DS1307_WriteDateTime(&_I2C1, &Date_Time_RTC);
+
+			/*Display message to user that the time settled successfully*/
+			USART_SendStringPolling(UART_2, "\nThe Given Time Settled successfully\n");
+
+			/*Return to Main Menu*/
+
+		}
+		else
+		{
+
+			/*Wrong Calender Received from User*/
+			USART_SendStringPolling(UART_2, "\nWrong Date or Time is Given , Please Try Again\n");
+		}
+	}
 }
-
-/* ========================================================================= *
- *                    FUNCTIONS IMPLEMENTATION SECTION                       *
- * ========================================================================= */
-
-
-
 /************************ SOURCE REVISION LOG *********************************
  *
  *    Date    Version   Author             Description
