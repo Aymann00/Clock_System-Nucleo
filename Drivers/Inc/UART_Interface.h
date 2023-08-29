@@ -194,7 +194,7 @@ void UART_u16ReceiveIT(UART_Config_t *UART_Config, void (*pv_CallBackFunc)(void)
  *@paramter[in] UART_Config_t *UART_Config : Pointer to the UART peripheral configuration structure
  *@retval void
  *==============================================================================================================================================*/
-void UART_voidRecieveBuffer(UART_Config_t *UART_Config, uint16_t *Copy_p8Buffer, uint16_t Copy_u8BufferSize);
+void UART_voidRecieveBuffer(UART_Config_t *UART_Config, uint8_t *Copy_p8Buffer, uint16_t Copy_u8BufferSize);
 /*==============================================================================================================================================
  *@fn    USART_voidTransmitBuffer
  *@brief  This function is used to transmit a string through UART peripheral using polling
@@ -237,4 +237,12 @@ void UART_VoidEnableDMATransmit(UART_Config_t *UART_Config);
  *@retval void
  *==============================================================================================================================================*/
 void UART_VoidEnableDMAReciver(UART_Config_t *UART_Config);
+/*
+ * @function 		:	USART_SendStringPolling
+ * @brief			:	Send String using USART
+ * @param			:	String
+ * @retval			:	Error State
+ */
+Error_State_t USART_SendStringPolling(uint8_t USART_Num , const char* String);
+
 #endif /* UART_INCLUDE_UART_INTERFACE_H_ */
