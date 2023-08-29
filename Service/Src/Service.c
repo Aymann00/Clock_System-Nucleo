@@ -140,9 +140,9 @@ Error_State_t ReadDateTime_FromPC(void)
 
 	Error_State_t Error_State = OK;
 
-	uint8_t Date_Time_USART[23] = {0};
+	uint8_t Date_Time_USART[CALENDER_FORMAT] = {0};
 
-	static uint8_t First_Time_Flag =1;
+	static uint8_t First_Time_Flag 	=	FIRST_TIME;
 
 	if (First_Time_Flag == FIRST_TIME)
 	{
@@ -183,38 +183,38 @@ static DS1307_DAYS_t FindDay(uint8_t * Calender)
 	DS1307_DAYS_t Day = 0;
 
 	/*Check the 3 Letters*/
-	if ((('S'==Calender[10]) || ('s'==Calender[10]))&&(('A'==Calender[11]) || ('a'==Calender[11]))&&(('T'==Calender[12]) || ('t'==Calender[12])))
+	if ((('S'==Calender[FIRST_LETTER_OF_DAY]) || ('s'==Calender[FIRST_LETTER_OF_DAY]))&&(('A'==Calender[SECOND_LETTER_OF_DAY]) || ('a'==Calender[SECOND_LETTER_OF_DAY]))&&(('T'==Calender[THIRD_LETTER_OF_DAY]) || ('t'==Calender[THIRD_LETTER_OF_DAY])))
 	{
 		/*First 3 letters are SAT so the day is Saturday*/
 		Day = DS1307_SATURDAY;
 	}
-	else if ((('S'==Calender[10]) || ('s'==Calender[10]))&&(('U'==Calender[11]) || ('u'==Calender[11]))&&(('N'==Calender[12]) || ('n'==Calender[12])))
+	else if ((('S'==Calender[FIRST_LETTER_OF_DAY]) || ('s'==Calender[FIRST_LETTER_OF_DAY]))&&(('U'==Calender[SECOND_LETTER_OF_DAY]) || ('u'==Calender[SECOND_LETTER_OF_DAY]))&&(('N'==Calender[THIRD_LETTER_OF_DAY]) || ('n'==Calender[THIRD_LETTER_OF_DAY])))
 	{
 		/*First 3 letters are SUN so the day is Sunday*/
 		Day = DS1307_SUNDAY;
 	}
-	else if ((('M'==Calender[10]) || ('m'==Calender[10]))&&(('O'==Calender[11]) || ('o'==Calender[11]))&&(('N'==Calender[12]) || ('n'==Calender[12])))
+	else if ((('M'==Calender[FIRST_LETTER_OF_DAY]) || ('m'==Calender[FIRST_LETTER_OF_DAY]))&&(('O'==Calender[SECOND_LETTER_OF_DAY]) || ('o'==Calender[SECOND_LETTER_OF_DAY]))&&(('N'==Calender[THIRD_LETTER_OF_DAY]) || ('n'==Calender[THIRD_LETTER_OF_DAY])))
 	{
 		/*First 3 letters are MON so the day is Monday*/
 		Day = DS1307_MONDAY;
 	}
 
-	else if ((('T'==Calender[10]) || ('t'==Calender[10]))&&(('U'==Calender[11]) || ('u'==Calender[11]))&&(('E'==Calender[12]) || ('e'==Calender[12])))
+	else if ((('T'==Calender[FIRST_LETTER_OF_DAY]) || ('t'==Calender[FIRST_LETTER_OF_DAY]))&&(('U'==Calender[SECOND_LETTER_OF_DAY]) || ('u'==Calender[SECOND_LETTER_OF_DAY]))&&(('E'==Calender[THIRD_LETTER_OF_DAY]) || ('e'==Calender[THIRD_LETTER_OF_DAY])))
 	{
 		/*First 3 letters are Tue so the day is Tuesday*/
 		Day = DS1307_TUESDAY;
 	}
-	else if ((('W'==Calender[10]) || ('w'==Calender[10]))&&(('E'==Calender[11]) || ('e'==Calender[11]))&&(('D'==Calender[12]) || ('d'==Calender[12])))
+	else if ((('W'==Calender[FIRST_LETTER_OF_DAY]) || ('w'==Calender[FIRST_LETTER_OF_DAY]))&&(('E'==Calender[SECOND_LETTER_OF_DAY]) || ('e'==Calender[SECOND_LETTER_OF_DAY]))&&(('D'==Calender[THIRD_LETTER_OF_DAY]) || ('d'==Calender[THIRD_LETTER_OF_DAY])))
 	{
 		/*First 3 letters are wed so the day is Wednesday*/
 		Day = DS1307_WEDNESDAY;
 	}
-	else if ((('T'==Calender[10]) || ('t'==Calender[10]))&&(('H'==Calender[11]) || ('h'==Calender[11]))&&(('U'==Calender[12]) || ('u'==Calender[12])))
+	else if ((('T'==Calender[FIRST_LETTER_OF_DAY]) || ('t'==Calender[FIRST_LETTER_OF_DAY]))&&(('H'==Calender[SECOND_LETTER_OF_DAY]) || ('h'==Calender[SECOND_LETTER_OF_DAY]))&&(('U'==Calender[THIRD_LETTER_OF_DAY]) || ('u'==Calender[THIRD_LETTER_OF_DAY])))
 	{
 		/*First 3 letters are THU so the day is Thrusday*/
 		Day = DS1307_THURSDAY;
 	}
-	else if ((('F'==Calender[10]) || ('f'==Calender[10]))&&(('R'==Calender[11]) || ('r'==Calender[11]))&&(('I'==Calender[12]) || ('i'==Calender[12])))
+	else if ((('F'==Calender[FIRST_LETTER_OF_DAY]) || ('f'==Calender[FIRST_LETTER_OF_DAY]))&&(('R'==Calender[SECOND_LETTER_OF_DAY]) || ('r'==Calender[SECOND_LETTER_OF_DAY]))&&(('I'==Calender[THIRD_LETTER_OF_DAY]) || ('i'==Calender[THIRD_LETTER_OF_DAY])))
 	{
 		/*First 3 letters are FRI so the day is Friday*/
 		Day = DS1307_FRIDAY;
@@ -229,23 +229,23 @@ static DS1307_DAYS_t FindDay(uint8_t * Calender)
 static void Calculate_Calender(DS1307_Config_t * Date_Time_To_RTC,uint8_t * Date_Time_From_USART)
 {
 	/*Calculate The Date*/
-	Date_Time_To_RTC->Year 		= (((Date_Time_From_USART[0]-48) *10)+(Date_Time_From_USART[1]-48));
-	Date_Time_To_RTC->Month 	= (((Date_Time_From_USART[3]-48) *10)+(Date_Time_From_USART[4]-48));
-	Date_Time_To_RTC->Date 		= (((Date_Time_From_USART[6]-48) *10)+(Date_Time_From_USART[7]-48));
+	Date_Time_To_RTC->Year 		= (((Date_Time_From_USART[0]-ZERO_ASCII) *10)+(Date_Time_From_USART[1]-ZERO_ASCII));
+	Date_Time_To_RTC->Month 	= (((Date_Time_From_USART[3]-ZERO_ASCII) *10)+(Date_Time_From_USART[4]-ZERO_ASCII));
+	Date_Time_To_RTC->Date 		= (((Date_Time_From_USART[6]-ZERO_ASCII) *10)+(Date_Time_From_USART[7]-ZERO_ASCII));
 
 	/*Calculate the Time*/
-	Date_Time_To_RTC->Hours 	= (((Date_Time_From_USART[15]-48) *10)+(Date_Time_From_USART[16]-48));
-	Date_Time_To_RTC->Minutes	= (((Date_Time_From_USART[18]-48) *10)+(Date_Time_From_USART[19]-48));
-	Date_Time_To_RTC->Seconds 	= (((Date_Time_From_USART[21]-48) *10)+(Date_Time_From_USART[22]-48));
+	Date_Time_To_RTC->Hours 	= (((Date_Time_From_USART[15]-ZERO_ASCII) *10)+(Date_Time_From_USART[16]-ZERO_ASCII));
+	Date_Time_To_RTC->Minutes	= (((Date_Time_From_USART[18]-ZERO_ASCII) *10)+(Date_Time_From_USART[19]-ZERO_ASCII));
+	Date_Time_To_RTC->Seconds 	= (((Date_Time_From_USART[21]-ZERO_ASCII) *10)+(Date_Time_From_USART[22]-ZERO_ASCII));
 
 }
 static Error_State_t Check_Calender(DS1307_Config_t * Date_Time_To_RTC)
 {
 	Error_State_t Error_State = OK;
-	if (	(Date_Time_To_RTC->Date>31) 	|| 	(Date_Time_To_RTC->Day==WRONG_DAY)
-			||(Date_Time_To_RTC->Hours>23)	||	(Date_Time_To_RTC->Minutes>59)
-			||(Date_Time_To_RTC->Month >12) || 	(Date_Time_To_RTC->Seconds>59)
-			||(Date_Time_To_RTC->Year>99)	)
+	if (	(Date_Time_To_RTC->Date>MAX_DATE) 	|| 	(Date_Time_To_RTC->Day==WRONG_DAY)
+			||(Date_Time_To_RTC->Hours>MAX_HOURS)	||	(Date_Time_To_RTC->Minutes>MAX_MINUTES)
+			||(Date_Time_To_RTC->Month >MAX_MONTH) || 	(Date_Time_To_RTC->Seconds>MAX_SECONDS)
+			||(Date_Time_To_RTC->Year>MAX_YEAR)	)
 	{
 		Error_State	=	NOK;
 	}
