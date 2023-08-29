@@ -38,7 +38,6 @@
 #define SECOND_LETTER_OF_DAY	11u
 #define THIRD_LETTER_OF_DAY		12u
 
-#define ZERO_ASCII				48u
 
 #define MAX_DATE				31u
 #define MAX_HOURS				23u
@@ -54,7 +53,7 @@
 typedef enum
 {
 	NUM_OF_USART_PINS = 0x02 , NUM_OF_SPI_PINS = 0x03 , NUM_OF_ID_PASS_DIGITS = 0x04 ,
-	NUM_OF_TRIES = 0x03
+	NUM_OF_TRIES = 0x03	,	NUM_OF_I2C_PINS = 0x02
 } MAGIG_NUMBERS_t ;
 typedef enum
 {
@@ -76,6 +75,8 @@ void Pins_Init( void ) ;
 void USART2_Init ( void ) ;
 
 void SPI1_Init( void ) ;
+
+void I2C1_Init( void );
 
 uint8_t * ID_Reception( void ) ;
 

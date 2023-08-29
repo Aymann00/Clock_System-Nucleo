@@ -46,6 +46,9 @@ UART_Config_t * UART_CONFIG ;
 DS1307_Config_t Date_Time_RTC ;
 
 SPI_CONFIGS_t * SPI_CONFIG ;
+
+I2C_Configs_t * I2C_CONFIG ;
+
 UART_Interrupts_t UART2INTERRUPTS =
 {
 		.IDLE=UART_Disable ,.PE=UART_Disable ,
@@ -394,6 +397,31 @@ void Pins_Init( void )
 
 	/* Initializing SPI1 Pins */
 	GPIO_u8PinsInit(SPI1_Pins, NUM_OF_SPI_PINS ) ;
+
+	/*I2C GPIO Pins Configurations*/
+	GPIO_PinConfig_t I2C1_Pins [NUM_OF_I2C_PINS] = {
+			{
+					.Mode 		= ALTERNATE_FUNCTION,
+					.AltFunc 	= AF4,
+					.OutputType = OPEN_DRAIN,
+					.PullType	= PULL_UP,
+					.Port		= PORTB,
+					.PinNum		= PIN8,
+					.Speed		= LOW_SPEED
+			},
+			{
+					.Mode 		= ALTERNATE_FUNCTION,
+					.AltFunc 	= AF4,
+					.OutputType = OPEN_DRAIN,
+					.PullType	= PULL_UP,
+					.Port		= PORTB,
+					.PinNum		= PIN9,
+					.Speed		= LOW_SPEED
+			}
+	};
+
+	/* Initializing I2C1 Pins */
+	GPIO_u8PinsInit(I2C1_Pins, NUM_OF_I2C_PINS ) ;
 }
 
 void USART2_Init ( void )
@@ -443,6 +471,27 @@ void SPI1_Init( void )
 	SPI_CONFIG = &SPI1Config ;
 }
 
+void I2C1_Init( void ){
+
+	/*I2C1 Configurations*/
+	I2C_Configs_t	_I2C1 ={
+			.ADD_Mode			=	ADDRESSING_MODE_7BITS,
+			.Chip_Address		=	10,
+			.I2C_Mode			=	MASTER_MODE_STANDARD,
+			.I2C_Num			=	I2C_NUMBER_1,
+			.I2C_Pclk_MHZ		=	16,
+			.PEC_State			=	PACKET_ERR_CHECK_DISABLED,
+			.SCL_Frequency_KHZ	=	100,
+			.Stretch_state		=	CLK_STRETCH_ENABLED
+	};
+
+	/* I2C1 Initialization */
+	I2C_Init(&_I2C1);
+
+	I2C_CONFIG	=	&_I2C1	;
+
+}
+
 void ShutDown_Sequence( void )
 {
 	/* This Funciton is Called When Number of Tries of User is Finished & RED_LED_CODE is Transmitted to the
@@ -456,7 +505,7 @@ void ShutDown_Sequence( void )
 }
 Error_State_t ReadDateTime_FromPC(void)
 {
-Error_State_t Error_State = OK;
+	Error_State_t Error_State = OK;
 
 	uint8_t Date_Time_USART[CALENDER_FORMAT] = {0};
 
@@ -464,7 +513,7 @@ Error_State_t Error_State = OK;
 
 	if (First_Time_Flag == FIRST_TIME)
 	{
-		USART_SendStringPolling(UART_2,  "WELCOME To Set Date and Time Mode\n");
+		USART_SendStringPolling(UART_2,  "\nWELCOME To Set Date and Time Mode\n");
 		First_Time_Flag		=	NOT_FIRST_TIME	;
 	}
 	USART_SendStringPolling(UART_2,  "Enter the Date And time in the Following Form\n");
@@ -487,7 +536,7 @@ Error_State_t Error_State = OK;
 	}
 	else {
 		Error_State	=NOK;
-		}
+	}
 
 	return Error_State ;
 }
@@ -510,7 +559,7 @@ static DS1307_DAYS_t FindDay(uint8_t * Calender)
 	{
 		/*First 3 letters are MON so the day is Monday*/
 		Day = DS1307_MONDAY;
-		}
+	}
 
 	else if ((('T'==Calender[FIRST_LETTER_OF_DAY]) || ('t'==Calender[FIRST_LETTER_OF_DAY]))&&(('U'==Calender[SECOND_LETTER_OF_DAY]) || ('u'==Calender[SECOND_LETTER_OF_DAY]))&&(('E'==Calender[THIRD_LETTER_OF_DAY]) || ('e'==Calender[THIRD_LETTER_OF_DAY])))
 	{
@@ -563,3 +612,5 @@ static Error_State_t Check_Calender(DS1307_Config_t * Date_Time_To_RTC)
 	}
 	return Error_State ;
 }
+
+

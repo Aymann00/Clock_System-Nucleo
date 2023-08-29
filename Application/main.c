@@ -21,21 +21,21 @@
 #include "../Library/ErrTypes.h"
 #include "../Library/STM32F446xx.h"
 
-#include "../Service/Inc/Service.h"
+
 #include "../Drivers/Inc/I2C_Interface.h"
 #include "../Drivers/Inc/UART_Interface.h"
 
 #include "../HAL/Inc/DS1307_Interface.h"
 
+#include "../Service/Inc/Service.h"
 /* ========================================================================= *
  *                        GLOBAL VARIABLES SECTION                           *
  * ========================================================================= */
 extern DS1307_Config_t Date_Time_RTC ;
-extern I2C_Configs_t _I2C1;
+extern I2C_Configs_t * I2C_CONFIG	;
 /* ========================================================================= *
  *                        MAIN APPLICATION SECTION                           *
  * ========================================================================= */
-
 
 int main(void)
 {
@@ -63,6 +63,9 @@ int main(void)
 
 	/* Initialize SPI1 */
 	SPI1_Init( ) ;
+
+	/* Initialize I2C1 */
+	I2C1_Init( ) ;
 
 	/* Receive ID From User */
 	ID_Ptr = ID_Reception( ) ;
@@ -95,30 +98,30 @@ int main(void)
 
 			break ;
 		case SET_DATE_TIME_OPTION :
-		while(1)
-		{
-		/*Read the settled time and date from PC terminal*/
-		Receiving_State		=	ReadDateTime_FromPC();
-		/*Check The Error State*/
-		if (OK == Receiving_State)
+			while(1)
+			{
+				/*Read the settled time and date from PC terminal*/
+				Receiving_State		=	ReadDateTime_FromPC();
+				/*Check The Error State*/
+				if (OK == Receiving_State)
 				{
-			
-			/*Receiving Calender from user is done Successfully*/
-			/*Write the Received Calender in the RTC Module*/
-			DS1307_WriteDateTime(&_I2C1, &Date_Time_RTC);
-			
-			/*Display message to user that the time settled successfully*/
-			USART_SendStringPolling(UART_2, "\nThe Given Time Settled successfully\n");
-			
-			/*Return to Main Menu*/
-			break;
+
+					/*Receiving Calender from user is done Successfully*/
+					/*Write the Received Calender in the RTC Module*/
+					DS1307_WriteDateTime(I2C_CONFIG, &Date_Time_RTC);
+
+					/*Display message to user that the time settled successfully*/
+					USART_SendStringPolling(UART_2, "\nThe Given Time Settled successfully\n");
+
+					/*Return to Main Menu*/
+					break;
+				}
+				else
+				{
+					/*Wrong Calender Received from User*/
+					USART_SendStringPolling(UART_2, "\nWrong Date or Time is Given , Please Try Again\n");
+				}
 			}
-		else
-		{
-			/*Wrong Calender Received from User*/
-			USART_SendStringPolling(UART_2, "\nWrong Date or Time is Given , Please Try Again\n");
-		}
-		}
 			break ;
 
 		default :
@@ -142,7 +145,7 @@ int main(void)
 void SPI_CallBackFunc( void )
 {
 	/* ShutDown Sequence Excecution */
-   ShutDown_Sequence( ) ;
+	ShutDown_Sequence( ) ;
 }
 
 
