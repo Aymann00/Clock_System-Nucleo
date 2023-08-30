@@ -129,7 +129,7 @@ void Check_IF_ContinueisNeeded( void )
 void Check_LoginInfo( uint8_t * ID_Ptr , uint8_t * Pass_Ptr , uint8_t TriesNumber  )
 {
 	/* Data To Send Via SPI if Number of Tries is Finished */
-	uint16_t DATA_SENT_viaSPI = RED_LED_CODE ;
+	uint8_t DATA_SENT_viaSPI = RED_LED_CODE ;
 
 	/* Variable to Hold Return of Function Checking on ID & Inverted Pass */
 	ID_PASS_EQUALITY_t ID_PASS_Relation = ID_NOEQUAL_INVERTED_PASS ;
@@ -458,7 +458,7 @@ void SPI1_Init( void )
 	/* SPI1 Configuration */
 	static SPI_CONFIGS_t SPI1Config =
 	{
-			.BaudRate_Value = BAUDRATE_FpclkBY8 , .CRC_State = CRC_STATE_DISABLED ,
+			.BaudRate_Value = BAUDRATE_FpclkBY256 , .CRC_State = CRC_STATE_DISABLED ,
 			.Chip_Mode = CHIP_MODE_MASTER , .Clock_Phase = CLOCK_PHASE_CAPTURE_FIRST , .Clock_Polarity = CLOCK_POLARITY_IDLE_LOW ,
 			.Frame_Size = DATA_FRAME_SIZE_8BITS , .Frame_Type = FRAME_FORMAT_MSB_FIRST , .MultiMaster_State = MULTIMASTER_PROVIDED , .SPI_Num = SPI_NUMBER1 ,
 			.Transfer_Mode = TRANSFER_MODE_FULL_DUPLEX

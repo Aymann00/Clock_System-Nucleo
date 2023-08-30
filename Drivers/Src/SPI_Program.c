@@ -31,7 +31,7 @@ static uint8_t Global_Data_Size=0;
 static uint8_t* Global_Data_Buffer=NULL;
 
 /*Variable to Save the Received globally*/
-static uint8_t* Global_Received_Data=NULL;
+static uint16_t* Global_Received_Data=NULL;
 /*******************************************************/
 
 /****************** MAIN FUNCTIONS *********************/
@@ -367,11 +367,11 @@ Error_State_t SPI_SET_Internal_Slave_State(SPI_SPI_NUMBER_t SPI_Num, SLAVE_STATE
 
 	if (( SPI_Num >=SPI_NUMBER1) && ( SPI_Num <=SPI_NUMBER4))
 	{
-		if (Slave_State = SLAVE_STATE_ACTIVATED)
+		if (Slave_State == SLAVE_STATE_ACTIVATED)
 		{
 			SPIs[SPI_Num]->SPI_CR1 &= ~(1<<(SSI_BIT));
 		}
-		else if (Slave_State = SLAVE_STATE_DEACTIVATED)
+		else if (Slave_State == SLAVE_STATE_DEACTIVATED)
 		{
 			SPIs[SPI_Num]->SPI_CR1 |= (1<<(SSI_BIT));
 		}
