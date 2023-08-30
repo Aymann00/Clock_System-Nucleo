@@ -31,7 +31,7 @@ static uint8_t Global_Data_Size=0;
 static uint8_t* Global_Data_Buffer=NULL;
 
 /*Variable to Save the Received globally*/
-static uint16_t* Global_Received_Data=NULL;
+static uint8_t* Global_Received_Data=NULL;
 /*******************************************************/
 
 /****************** MAIN FUNCTIONS *********************/
@@ -261,7 +261,7 @@ Error_State_t SPI_Transmit_IT(const SPI_CONFIGS_t * SPI_Config, uint8_t * Data ,
  * @param			:	CallBack Function
  * @retval			:	Error State
  */
-Error_State_t SPI_Receive_IT(const SPI_CONFIGS_t * SPI_Config, uint16_t * Received_Data ,uint8_t Buffer_Size , void (* SPI_RXC_CallBackFunc)(void))
+Error_State_t SPI_Receive_IT(const SPI_CONFIGS_t * SPI_Config, uint8_t * Received_Data ,uint8_t Buffer_Size , void (* SPI_RXC_CallBackFunc)(void))
 {
 	Error_State_t 	Error_State = 	OK	;
 	if ((NULL != Received_Data) && (NULL != SPI_RXC_CallBackFunc))

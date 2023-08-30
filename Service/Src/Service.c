@@ -49,34 +49,6 @@ SPI_CONFIGS_t * SPI_CONFIG ;
 
 I2C_Configs_t * I2C_CONFIG ;
 
-UART_Interrupts_t UART2INTERRUPTS =
-{
-		.IDLE=UART_Disable ,.PE=UART_Disable ,
-		.RXN=UART_Disable , .TC=UART_Disable,.TX=UART_Disable
-};
-
-UART_Config_t _USART2 = {
-
-		.BaudRate 		= BaudRate_9600,
-		.Direction		= RX_TX,
-		.OverSampling	= OverSamplingBy16,
-		.ParityState	= UART_Disable,
-		.StopBits		= OneStopBit,
-		.UART_ID		= UART_2,
-		.WordLength		= _8Data,
-		.Interrupts		= 	&UART2INTERRUPTS
-};
-
-I2C_Configs_t	_I2C1 ={
-		.ADD_Mode			=	ADDRESSING_MODE_7BITS,
-		.Chip_Address		=	10,
-		.I2C_Mode			=	MASTER_MODE_STANDARD,
-		.I2C_Num			=	I2C_NUMBER_1,
-		.I2C_Pclk_MHZ		=	16,
-		.PEC_State			=	PACKET_ERR_CHECK_DISABLED,
-		.SCL_Frequency_KHZ	=	100,
-		.Stretch_state		=	CLK_STRETCH_ENABLED
-};
 /* ========================================================================= *
  *                    FUNCTIONS IMPLEMENTATION SECTION                       *
  * ========================================================================= */
@@ -368,6 +340,12 @@ void Clock_Init( void )
 	/* Enable GPIO PortA Clock */
 	RCC_AHB1EnableCLK( GPIOAEN ) ;
 
+	/* Enable GPIO PortB Clock */
+	RCC_AHB1EnableCLK( GPIOBEN ) ;
+
+	/* Enable I2C1 Clock */
+	RCC_APB1EnableCLK( I2C1EN ) ;
+
 }
 
 void Pins_Init( void )
@@ -474,7 +452,7 @@ void SPI1_Init( void )
 void I2C1_Init( void ){
 
 	/*I2C1 Configurations*/
-	I2C_Configs_t	_I2C1 ={
+	static I2C_Configs_t	_I2C1 ={
 			.ADD_Mode			=	ADDRESSING_MODE_7BITS,
 			.Chip_Address		=	10,
 			.I2C_Mode			=	MASTER_MODE_STANDARD,
@@ -520,8 +498,8 @@ Error_State_t ReadDateTime_FromPC(void)
 	USART_SendStringPolling(UART_2,  "yy-mm-dd (First 3 Letters of Day Name) HH:MM:SS\n");
 	for (uint8_t Local_Counter=0	;	Local_Counter<23	;	Local_Counter++)
 	{
-		Date_Time_USART[Local_Counter] = UART_u16Receive(&_USART2);
-		UART_voidTransmitData(&_USART2, Date_Time_USART[Local_Counter]);
+		Date_Time_USART[Local_Counter] = UART_u16Receive(UART_CONFIG);
+		UART_voidTransmitData(UART_CONFIG, Date_Time_USART[Local_Counter]);
 	}
 	/*Find calender Values to be send to RTC*/
 	Calculate_Calender(&Date_Time_RTC , Date_Time_USART);
