@@ -73,6 +73,4 @@ static void SPI_IRQ_Source_HANDLE(SPI_SPI_NUMBER_t SPI_Num);
 
 #define	SSI_BIT					8
 
-
-
 #endif /* SPI_INC_SPI_PRIVATE_H_ */

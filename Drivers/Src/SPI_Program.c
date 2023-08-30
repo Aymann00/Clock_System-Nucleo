@@ -6,8 +6,8 @@
 
 /******************* MAIN INCLUDES *********************/
 #include <stdint.h>
-#include "../../Library/STM32F446xx.h"
-#include "../../Library/ErrTypes.h"
+#include "../../LIBRARY/STM32F446xx.h"
+#include "../../LIBRARY/ErrTypes.h"
 
 
 #include "../Inc/SPI_Interface.h"
@@ -17,7 +17,7 @@
 
 /********************** MAIN PV ************************/
 
-static SPI_RegDef_t * SPIs[MAX_SPIs_NUMBER]={SPI1,SPI2,SPI3,SPI4};
+static SPI_REG_t * SPIs[MAX_SPIs_NUMBER]={SPI1,SPI2,SPI3,SPI4};
 
 static uint8_t IRQ_Source[MAX_SPIs_NUMBER]={NO_SRC};
 
@@ -28,10 +28,10 @@ static void (*SPI_pf_CallBackFuncs[MAX_SPIs_NUMBER][SPI_MAX_INTERRUPTS])(void)={
 static uint8_t Global_Data_Size=0;
 
 /*Variable to Save the Data buffer globally*/
-static uint16_t* Global_Data_Buffer=NULL;
+static uint8_t* Global_Data_Buffer=NULL;
 
 /*Variable to Save the Received globally*/
-static uint16_t* Global_Received_Data=NULL;
+static uint8_t* Global_Received_Data=NULL;
 /*******************************************************/
 
 /****************** MAIN FUNCTIONS *********************/
@@ -45,56 +45,56 @@ Error_State_t SPI_Init(const SPI_CONFIGS_t * SPI_Config)
 		/*1- Set Baud Rate Value if Master*/
 		if (SPI_Config->Chip_Mode == CHIP_MODE_MASTER)
 		{
-			SPIs[SPI_Config->SPI_Num]->CR1 &= ~((BAUD_RATE_MASK)<<BAUD_RATE_START_BITS);
-			SPIs[SPI_Config->SPI_Num]->CR1 |=  ((SPI_Config->BaudRate_Value)<<BAUD_RATE_START_BITS);
+			SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((BAUD_RATE_MASK)<<BAUD_RATE_START_BITS);
+			SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->BaudRate_Value)<<BAUD_RATE_START_BITS);
 		}
 		/*2- Set Clock Polarity*/
-		SPIs[SPI_Config->SPI_Num]->CR1 &= ~((CLOCK_POL_MASK)<<CLOCK_POL_START_BITS);
-		SPIs[SPI_Config->SPI_Num]->CR1 |=  ((SPI_Config->Clock_Polarity)<<CLOCK_POL_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((CLOCK_POL_MASK)<<CLOCK_POL_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->Clock_Polarity)<<CLOCK_POL_START_BITS);
 
 		/*3- Set Clock Phase*/
-		SPIs[SPI_Config->SPI_Num]->CR1 &= ~((CLOCK_PHASE_MASK)<<CLOCK_PHASE_START_BITS);
-		SPIs[SPI_Config->SPI_Num]->CR1 |=  ((SPI_Config->Clock_Phase)<<CLOCK_PHASE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((CLOCK_PHASE_MASK)<<CLOCK_PHASE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->Clock_Phase)<<CLOCK_PHASE_START_BITS);
 
 		/*4- Set Transfer Mode*/
 		if(SPI_Config->Transfer_Mode != TRANSFER_MODE_SIMPLEX)
 		{
-			SPIs[SPI_Config->SPI_Num]->CR1 &= ~((TRANSFER_MODE_MASK)<<TRANS_MODE_START_BITS);
-			SPIs[SPI_Config->SPI_Num]->CR1 |=  ((SPI_Config->Transfer_Mode)<<TRANS_MODE_START_BITS);
+			SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((TRANSFER_MODE_MASK)<<TRANS_MODE_START_BITS);
+			SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->Transfer_Mode)<<TRANS_MODE_START_BITS);
 		}
 		else {
-			SPIs[SPI_Config->SPI_Num]->CR1 &= ~((RX_ONLY_MODE_MASK)<<RX_ONLY_START_BITS);
-			SPIs[SPI_Config->SPI_Num]->CR1 |=  (1<<RX_ONLY_START_BITS);
+			SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((RX_ONLY_MODE_MASK)<<RX_ONLY_START_BITS);
+			SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  (1<<RX_ONLY_START_BITS);
 
 		}
 		/*5- Set Frame Format Type*/
-		SPIs[SPI_Config->SPI_Num]->CR1 &= ~((FRAME_TYPE_MASK)<<FRAME_TYPE_START_BITS);
-		SPIs[SPI_Config->SPI_Num]->CR1 |=  ((SPI_Config->Frame_Type)<<FRAME_TYPE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((FRAME_TYPE_MASK)<<FRAME_TYPE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->Frame_Type)<<FRAME_TYPE_START_BITS);
 
 		/*6- Set CRC Enable State*/
-		SPIs[SPI_Config->SPI_Num]->CR1 &= ~((CRC_ENABLE_MASK)<<CRC_ENABLE_START_BITS);
-		SPIs[SPI_Config->SPI_Num]->CR1 |=  ((SPI_Config->CRC_State)<<CRC_ENABLE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((CRC_ENABLE_MASK)<<CRC_ENABLE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->CRC_State)<<CRC_ENABLE_START_BITS);
 
 		/*7- Set Slave Management state*/
-		SPIs[SPI_Config->SPI_Num]->CR1 &= ~((SLAVE_MANAGE_MASK)<<SLAVE_MANAGE_START_BITS);
-		SPIs[SPI_Config->SPI_Num]->CR1 |=  ((SPI_Config->Slave_Manage_State)<<SLAVE_MANAGE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((SLAVE_MANAGE_MASK)<<SLAVE_MANAGE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->Slave_Manage_State)<<SLAVE_MANAGE_START_BITS);
 
 		/*8- Set CHIP State*/
-		SPIs[SPI_Config->SPI_Num]->CR1 &= ~((CHIP_MODE_MASK)<<CHIP_MODE_START_BITS);
-		SPIs[SPI_Config->SPI_Num]->CR1 |=  ((SPI_Config->Chip_Mode)<<CHIP_MODE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((CHIP_MODE_MASK)<<CHIP_MODE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->Chip_Mode)<<CHIP_MODE_START_BITS);
 
 		/*9- Set Data Frame SIZE*/
-		SPIs[SPI_Config->SPI_Num]->CR1 &= ~((FRAME_SIZE_MASK)<<FRAME_SIZE_START_BITS);
-		SPIs[SPI_Config->SPI_Num]->CR1 |=  ((SPI_Config->Frame_Size)<<FRAME_SIZE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((FRAME_SIZE_MASK)<<FRAME_SIZE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->Frame_Size)<<FRAME_SIZE_START_BITS);
 
 		/*10- Set MultiMaster Ability State if Master*/
 		if (SPI_Config->Chip_Mode == CHIP_MODE_MASTER)
 		{
-			SPIs[SPI_Config->SPI_Num]->CR2 &= ~((SSOE_MASK)<<SSOE_BIT_START);
-			SPIs[SPI_Config->SPI_Num]->CR2 |=  ((SPI_Config->MultiMaster_State)<<SSOE_BIT_START);
+			SPIs[SPI_Config->SPI_Num]->SPI_CR2 &= ~((SSOE_MASK)<<SSOE_BIT_START);
+			SPIs[SPI_Config->SPI_Num]->SPI_CR2 |=  ((SPI_Config->MultiMaster_State)<<SSOE_BIT_START);
 		}
 		/*11- Enable SPI*/
-		SPIs[SPI_Config->SPI_Num]->CR1 |=  ((1)<<SPI_ENABLE_BIT_START);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((1)<<SPI_ENABLE_BIT_START);
 	}
 	else
 	{
@@ -120,16 +120,16 @@ Error_State_t SPI_Transmit(const SPI_CONFIGS_t * SPI_Config, uint16_t * Data , u
 	{
 		if (( SPI_Config->SPI_Num >=SPI_NUMBER1) && ( SPI_Config->SPI_Num <=SPI_NUMBER4))
 		{
-
 			/*Send the Data*/
 			while (Counter < Buffer_Size)
 			{
 				while (Flag_State != FLAG_SET)
 				{
-					Flag_State	=	GET_BIT(SPIs[SPI_Config->SPI_Num]->SR , SPI_FLAGS_TXE);
+					Flag_State	=	GET_BIT(SPIs[SPI_Config->SPI_Num]->SPI_SR , SPI_FLAGS_TXE);
 				}
 				/*Put Data in DR*/
-				SPIs[SPI_Config->SPI_Num]->DR = Data[Counter++];
+				SPIs[SPI_Config->SPI_Num]->SPI_DR = *Data;
+				Counter++;
 			}
 		}
 		else {
@@ -166,10 +166,10 @@ Error_State_t SPI_Receive(const SPI_CONFIGS_t * SPI_Config, uint16_t * Received_
 					/*Wait till data is Received*/
 					while (Flag_State != FLAG_SET)
 					{
-						Flag_State	=	GET_BIT(SPIs[SPI_Config->SPI_Num]->SR , SPI_FLAGS_RXNE);
+						Flag_State	=	GET_BIT(SPIs[SPI_Config->SPI_Num]->SPI_SR , SPI_FLAGS_RXNE);
 					}
 					/*Read the Received data*/
-					Received_Data[Counter++] = SPIs[SPI_Config->SPI_Num]->DR ;
+					Received_Data[Counter++] = SPIs[SPI_Config->SPI_Num]->SPI_DR ;
 				}
 			}
 			else if (SPI_Config->Chip_Mode == CHIP_MODE_MASTER)
@@ -177,14 +177,14 @@ Error_State_t SPI_Receive(const SPI_CONFIGS_t * SPI_Config, uint16_t * Received_
 				while (Counter < Buffer_Size)
 				{
 					/* writing garbage in the Tx Buffer to start Receiving*/
-					SPIs[SPI_Config->SPI_Num]->DR = GARBAGE_VALUE;
+					SPIs[SPI_Config->SPI_Num]->SPI_DR = GARBAGE_VALUE;
 					/*Wait till data is Received*/
 					while (Flag_State != FLAG_SET)
 					{
-						Flag_State	=	GET_BIT(SPIs[SPI_Config->SPI_Num]->SR , SPI_FLAGS_RXNE);
+						Flag_State	=	GET_BIT(SPIs[SPI_Config->SPI_Num]->SPI_SR , SPI_FLAGS_RXNE);
 					}
 					/*Read the Received data*/
-					Received_Data[Counter++] = SPIs[SPI_Config->SPI_Num]->DR ;
+					Received_Data[Counter++] = SPIs[SPI_Config->SPI_Num]->SPI_DR ;
 				}
 			}
 			else {
@@ -212,12 +212,12 @@ Error_State_t SPI_Receive(const SPI_CONFIGS_t * SPI_Config, uint16_t * Received_
  * @param			:	CallBack Function
  * @retval			:	Error State
  */
-Error_State_t SPI_Transmit_IT(const SPI_CONFIGS_t * SPI_Config, uint16_t * Data , uint8_t Buffer_Size, void (* SPI_TXC_CallBackFunc)(void))
+Error_State_t SPI_Transmit_IT(const SPI_CONFIGS_t * SPI_Config, uint8_t * Data , uint8_t Buffer_Size, void (* SPI_TXC_CallBackFunc)(void))
 {
 	Error_State_t 	Error_State = 	OK	;
 	if ((NULL != Data) && (NULL != SPI_TXC_CallBackFunc))
 	{
-		if (( SPI_Config->SPI_Num >=SPI_NUMBER1) && ( SPI_Config->SPI_Num <=SPI_NUMBER4))
+		if (( SPI_Config->SPI_Num >=SPI_NUMBER1) && ( SPI_Config->SPI_Num <=SPI_NUMBER2))
 		{
 			/*Set IRQ Source*/
 			IRQ_Source[SPI_Config->SPI_Num] = SOURCE_TX;
@@ -232,13 +232,13 @@ Error_State_t SPI_Transmit_IT(const SPI_CONFIGS_t * SPI_Config, uint16_t * Data 
 			Global_Data_Size   = Buffer_Size;
 
 			/*wait till TDR is ready*/
-			while( ! (GET_BIT(SPIs[SPI_Config->SPI_Num]->SR,SPI_FLAGS_TXE) ) );
+			while( ! (GET_BIT(SPIs[SPI_Config->SPI_Num]->SPI_SR,SPI_FLAGS_TXE) ) );
 
 			/*Put First Data in DR*/
-			SPIs[SPI_Config->SPI_Num]->DR = Data[0];
+			SPIs[SPI_Config->SPI_Num]->SPI_DR = Data[0];
 
 			/*Enable Transmission complete interrupt*/
-			SPIs[SPI_Config->SPI_Num]->CR2 |= (1<<(SPI_INTERRUPT_TXEIE));
+			SPIs[SPI_Config->SPI_Num]->SPI_CR2 |= (1<<(SPI_INTERRUPT_TXEIE));
 
 		}
 		else {
@@ -266,7 +266,7 @@ Error_State_t SPI_Receive_IT(const SPI_CONFIGS_t * SPI_Config, uint16_t * Receiv
 	Error_State_t 	Error_State = 	OK	;
 	if ((NULL != Received_Data) && (NULL != SPI_RXC_CallBackFunc))
 	{
-		if (( SPI_Config->SPI_Num >=SPI_NUMBER1) && ( SPI_Config->SPI_Num <=SPI_NUMBER4))
+		if (( SPI_Config->SPI_Num >=SPI_NUMBER1) && ( SPI_Config->SPI_Num <=SPI_NUMBER2))
 		{
 			/*Set Call Back Globally*/
 			SPI_pf_CallBackFuncs[SPI_Config->SPI_Num][SPI_FLAGS_RXNE]= SPI_RXC_CallBackFunc ;
@@ -283,7 +283,7 @@ Error_State_t SPI_Receive_IT(const SPI_CONFIGS_t * SPI_Config, uint16_t * Receiv
 				IRQ_Source[SPI_Config->SPI_Num] = SOURCE_RX_SLAVE;
 
 				/*Enable Receive complete Interrupt*/
-				SPIs[SPI_Config->SPI_Num]->CR2 |= (1<<(SPI_INTERRUPT_RXNEIE));
+				SPIs[SPI_Config->SPI_Num]->SPI_CR2 |= (1<<(SPI_INTERRUPT_RXNEIE));
 
 			}
 			else if (SPI_Config->Chip_Mode == CHIP_MODE_MASTER)
@@ -291,10 +291,10 @@ Error_State_t SPI_Receive_IT(const SPI_CONFIGS_t * SPI_Config, uint16_t * Receiv
 				/*Set IRQ Source*/
 				IRQ_Source[SPI_Config->SPI_Num] = SOURCE_RX_MASTER;
 				/* writing garbage in the Tx Buffer to start Receiving*/
-				SPIs[SPI_Config->SPI_Num]->DR = GARBAGE_VALUE;
+				SPIs[SPI_Config->SPI_Num]->SPI_DR = GARBAGE_VALUE;
 
 				/*Enable Receive complete Interrupt*/
-				SPIs[SPI_Config->SPI_Num]->CR2 |= (1<<(SPI_INTERRUPT_RXNEIE));
+				SPIs[SPI_Config->SPI_Num]->SPI_CR2 |= (1<<(SPI_INTERRUPT_RXNEIE));
 			}
 			else {
 				Error_State = SPI_WRONG_CHIP_MODE;
@@ -324,7 +324,7 @@ Error_State_t SPI_Enable_DMA_RX(SPI_SPI_NUMBER_t SPI_Num)
 
 	if (( SPI_Num >=SPI_NUMBER1) && ( SPI_Num <=SPI_NUMBER4))
 	{
-		SPIs[SPI_Num]->CR2 |= (1<<(RXDMAEN_BIT));
+		SPIs[SPI_Num]->SPI_CR2 |= (1<<(RXDMAEN_BIT));
 	}
 	else {
 		Error_State = SPI_WRONG_SPI_NUMBER;
@@ -344,7 +344,7 @@ Error_State_t SPI_Enable_DMA_TX(SPI_SPI_NUMBER_t SPI_Num)
 
 	if (( SPI_Num >=SPI_NUMBER1) && ( SPI_Num <=SPI_NUMBER4))
 	{
-		SPIs[SPI_Num]->CR2 |= (1<<(TXDMAEN_BIT));
+		SPIs[SPI_Num]->SPI_CR2 |= (1<<(TXDMAEN_BIT));
 	}
 	else {
 		Error_State = SPI_WRONG_SPI_NUMBER;
@@ -367,13 +367,13 @@ Error_State_t SPI_SET_Internal_Slave_State(SPI_SPI_NUMBER_t SPI_Num, SLAVE_STATE
 
 	if (( SPI_Num >=SPI_NUMBER1) && ( SPI_Num <=SPI_NUMBER4))
 	{
-		if (Slave_State == SLAVE_STATE_ACTIVATED)
+		if (Slave_State = SLAVE_STATE_ACTIVATED)
 		{
-			SPIs[SPI_Num]->CR1 &= ~(1<<(SSI_BIT));
+			SPIs[SPI_Num]->SPI_CR1 &= ~(1<<(SSI_BIT));
 		}
-		else if (Slave_State == SLAVE_STATE_DEACTIVATED)
+		else if (Slave_State = SLAVE_STATE_DEACTIVATED)
 		{
-			SPIs[SPI_Num]->CR1 |= (1<<(SSI_BIT));
+			SPIs[SPI_Num]->SPI_CR1 |= (1<<(SSI_BIT));
 		}
 		else {
 			Error_State = WRONG_SLAVE_STATE;
@@ -491,7 +491,7 @@ static void SPI_IRQ_Source_HANDLE(SPI_SPI_NUMBER_t SPI_Num)
 		if (Counter == Global_Data_Size)
 		{
 			/*Disable the TC interrupt*/
-			SPIs[SPI_Num]->CR2 &= ~(1<<(SPI_INTERRUPT_TXEIE));
+			SPIs[SPI_Num]->SPI_CR2 &= ~(1<<(SPI_INTERRUPT_TXEIE));
 
 			/*Clear IRQ Source*/
 			IRQ_Source[SPI_Num] = NO_SRC;
@@ -503,7 +503,7 @@ static void SPI_IRQ_Source_HANDLE(SPI_SPI_NUMBER_t SPI_Num)
 		/*Buffer isn't completely sent*/
 		else {
 			/*Send the next data element in the buffer*/
-			SPIs[SPI_Num]->DR = Global_Data_Buffer[Counter++];
+			SPIs[SPI_Num]->SPI_DR = Global_Data_Buffer[Counter++];
 		}
 	}
 	else if (IRQ_Source[SPI_Num] == SOURCE_RX_SLAVE)
@@ -513,13 +513,13 @@ static void SPI_IRQ_Source_HANDLE(SPI_SPI_NUMBER_t SPI_Num)
 		if (Global_Data_Size==1)
 		{
 			/*Disable the RXC interrupt*/
-			SPIs[SPI_Num]->CR2 &= ~(1<<(SPI_INTERRUPT_RXNEIE));
+			SPIs[SPI_Num]->SPI_CR2 &= ~(1<<(SPI_INTERRUPT_RXNEIE));
 
 			/*Clear IRQ Source*/
 			IRQ_Source[SPI_Num] = NO_SRC;
 
 			/*Receive the next data element*/
-			Global_Received_Data[Counter++] = SPIs[SPI_Num]->DR;
+			Global_Received_Data[Counter++] = SPIs[SPI_Num]->SPI_DR;
 
 			/*Call The call Back Function*/
 			SPI_pf_CallBackFuncs[SPI_Num][SPI_FLAGS_RXNE]();
@@ -530,7 +530,7 @@ static void SPI_IRQ_Source_HANDLE(SPI_SPI_NUMBER_t SPI_Num)
 			if (Counter == Global_Data_Size)
 			{
 				/*Disable the RXC interrupt*/
-				SPIs[SPI_Num]->CR2 &= ~(1<<(SPI_INTERRUPT_RXNEIE));
+				SPIs[SPI_Num]->SPI_CR2 &= ~(1<<(SPI_INTERRUPT_RXNEIE));
 
 				/*Clear IRQ Source*/
 				IRQ_Source[SPI_Num] = NO_SRC;
@@ -540,7 +540,7 @@ static void SPI_IRQ_Source_HANDLE(SPI_SPI_NUMBER_t SPI_Num)
 			}
 			else {
 				/*Receive the next data element*/
-				Global_Received_Data[Counter++] = SPIs[SPI_Num]->DR;
+				Global_Received_Data[Counter++] = SPIs[SPI_Num]->SPI_DR;
 			}
 		}
 	}
@@ -551,7 +551,7 @@ static void SPI_IRQ_Source_HANDLE(SPI_SPI_NUMBER_t SPI_Num)
 		if (Counter == Global_Data_Size)
 		{
 			/*Disable the RXC interrupt*/
-			SPIs[SPI_Num]->CR2 &= ~(1<<(SPI_INTERRUPT_RXNEIE));
+			SPIs[SPI_Num]->SPI_CR2 &= ~(1<<(SPI_INTERRUPT_RXNEIE));
 
 			/*Clear IRQ Source*/
 			IRQ_Source[SPI_Num] = NO_SRC;
@@ -562,10 +562,10 @@ static void SPI_IRQ_Source_HANDLE(SPI_SPI_NUMBER_t SPI_Num)
 		else {
 
 			/* writing garbage in the Tx Buffer to start Receiving*/
-			SPIs[SPI_Num]->DR = GARBAGE_VALUE;
+			SPIs[SPI_Num]->SPI_DR = GARBAGE_VALUE;
 
 			/*Receive the next data element*/
-			Global_Received_Data[Counter++] = SPIs[SPI_Num]->DR;
+			Global_Received_Data[Counter++] = SPIs[SPI_Num]->SPI_DR;
 		}
 	}
 }
@@ -583,13 +583,17 @@ void SPI2_IRQHandler (void)
 {
 	SPI_IRQ_Source_HANDLE(SPI_NUMBER2);
 }
+
 void SPI3_IRQHandler (void)
 {
 	SPI_IRQ_Source_HANDLE(SPI_NUMBER3);
 }
+
 void SPI4_IRQHandler (void)
 {
 	SPI_IRQ_Source_HANDLE(SPI_NUMBER4);
 }
+
+
 
 /****************** End OF IRQ HANDLERS ****************/

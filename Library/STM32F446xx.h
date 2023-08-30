@@ -510,33 +510,37 @@ typedef enum
 
 typedef struct
 {
-	volatile uint16_t CR1; /* SPI Control Register 1 */
+	volatile uint16_t SPI_CR1; /* SPI Control Register 1 */
 	uint16_t RESERVED0;
-	volatile uint16_t CR2; /* SPI Control Register 2 */
+	volatile uint16_t SPI_CR2; /* SPI Control Register 2 */
 	uint16_t RESERVED1;
-	volatile uint16_t SR; /* SPI Status Register */
+	volatile uint16_t SPI_SR; /* SPI Status Register */
 	uint16_t RESERVED2;
-	volatile uint16_t DR; /* SPI Data Register */
+	volatile uint16_t SPI_DR; /* SPI Data Register */
 	uint16_t RESERVED3;
-	volatile uint16_t CRCPR; /* SPI CRC Polynomial Register */
+	volatile uint16_t SPI_CRCPR; /* SPI CRC Polynomial Register */
 	uint16_t RESERVED4;
-	volatile uint16_t RXCRCR; /* SPI RX CRC Register */
+	volatile uint16_t SPI_RXCRCR; /* SPI RX CRC Register */
 	uint16_t RESERVED5;
-	volatile uint16_t TXCRCR; /* SPI TX CRC Register */
+	volatile uint16_t SPI_TXCRCR; /* SPI TX CRC Register */
 	uint16_t RESERVED6;
-	volatile uint16_t I2SCFGR; /* SPI_I2S Configuration Register */
+	volatile uint16_t SPI_I2SCFGR; /* SPI_I2S Configuration Register */
 	uint16_t RESERVED7;
-	volatile uint16_t I2SPR; /* SPI_I2S Prescaler Register */
+	volatile uint16_t SPI_I2SPR; /* SPI_I2S Prescaler Register */
 	uint16_t RESERVED8;
 } SPI_RegDef_t;
 
 /* ----------------------------------------------------------------------------------------- */
 /* ------------------------------- SPI Peripheral Definition ------------------------------- */
 /* ----------------------------------------------------------------------------------------- */
+#define SPI_REG_t	SPI_RegDef_t
+
+
 #define SPI1 ((SPI_RegDef_t *)SPI1_BASE_ADDRESS)
 #define SPI2 ((SPI_RegDef_t *)SPI2_BASE_ADDRESS)
 #define SPI3 ((SPI_RegDef_t *)SPI3_BASE_ADDRESS)
 #define SPI4 ((SPI_RegDef_t *)SPI4_BASE_ADDRESS)
+
 
 /* ----------------------------------------------------------------------------------- */
 /* ------------------------------- SPI REGISTERS' Bits ------------------------------- */

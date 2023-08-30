@@ -7,16 +7,13 @@
 #ifndef SPI_INC_SPI_INTERFACE_H_
 #define SPI_INC_SPI_INTERFACE_H_
 
-/******************* MAIN INCLUDES *********************/
-#include <stdint.h>
-#include "../../LIBRARY//ErrTypes.h"
-/*******************************************************/
-
 
 /************** MAIN USER DEFINED VARIABLES ************/
 typedef enum {
 	SPI_NUMBER1,
-	SPI_NUMBER2,SPI_NUMBER3,SPI_NUMBER4
+	SPI_NUMBER2,
+	SPI_NUMBER3,
+	SPI_NUMBER4
 }SPI_SPI_NUMBER_t;
 typedef enum {
 	BAUDRATE_FpclkBY2,
@@ -168,7 +165,7 @@ Error_State_t SPI_Receive(const SPI_CONFIGS_t * SPI_Config, uint16_t * Received_
  * @param			:	CallBack Function
  * @retval			:	Error State
  */
-Error_State_t SPI_Transmit_IT(const SPI_CONFIGS_t * SPI_Config, uint16_t * Data , uint8_t Buffer_Size, void (* SPI_TXC_CallBackFunc)(void));
+Error_State_t SPI_Transmit_IT(const SPI_CONFIGS_t * SPI_Config, uint8_t * Data , uint8_t Buffer_Size, void (* SPI_TXC_CallBackFunc)(void));
 
 /*
  * @function 		:	SPI_Receive_IT
