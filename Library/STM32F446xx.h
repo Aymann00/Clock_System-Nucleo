@@ -508,6 +508,8 @@ typedef enum
 /* ------------------------------- SPI REGISTERS Definition Structure ------------------------------ */
 /* ------------------------------------------------------------------------------------------------- */
 
+#define SPI_REG_t SPI_RegDef_t
+
 typedef struct
 {
 	volatile uint16_t SPI_CR1; /* SPI Control Register 1 */

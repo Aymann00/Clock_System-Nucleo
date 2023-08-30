@@ -3,7 +3,7 @@
  * @file           : Service.c
  * @Author         : Mohammed Ayman Shalaby
  * @brief          : Main program body
- * @Date           : Aug 28, 2023
+ * @Date           : Aug 30, 2023
  ******************************************************************************
  * @attention
  *
@@ -42,13 +42,14 @@
  *                        GLOBAL VARIABLES SECTION                           *
  * ========================================================================= */
 
+uint8_t ReadingArr[7]={ 0 } ;
 UART_Config_t * UART_CONFIG ;
 DS1307_Config_t Date_Time_RTC ;
 
 SPI_CONFIGS_t * SPI_CONFIG ;
 
 I2C_Configs_t * I2C_CONFIG ;
-
+DS1307_Config_t *ReadingStruct ;
 /* ========================================================================= *
  *                    FUNCTIONS IMPLEMENTATION SECTION                       *
  * ========================================================================= */
@@ -591,4 +592,22 @@ static Error_State_t Check_Calender(DS1307_Config_t * Date_Time_To_RTC)
 	return Error_State ;
 }
 
+ void Transmit_Time(void)
+  {
+	 SPI_Transmit_IT(&SPI1Config, ReadingArr , 7 , SPI_CALL_BACK ) ;
+ }
 
+ void Reading_Time(void)
+{
+	 /* Read Date & Time */
+	 ReadingStruct = DS1307_ReadDateTime(&I2C1_Config);
+
+	 /* Convert Reading Struct into Reading Array */
+	 ReadingArr[0] = ReadingStruct->Seconds;
+	 ReadingArr[1] = ReadingStruct->Minutes;
+	 ReadingArr[2] = ReadingStruct->Hours;
+	 ReadingArr[3] = ReadingStruct->Day;
+	 ReadingArr[4] = ReadingStruct->Month;
+	 ReadingArr[5] = ReadingStruct->Year;
+	 ReadingArr[6] = ReadingStruct->Date;
+}

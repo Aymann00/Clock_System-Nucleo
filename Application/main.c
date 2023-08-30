@@ -21,7 +21,7 @@
 #include "../Library/ErrTypes.h"
 #include "../Library/STM32F446xx.h"
 
-
+#include "../Drivers/Inc/NVIC_Interface.h"
 #include "../Drivers/Inc/I2C_Interface.h"
 #include "../Drivers/Inc/UART_Interface.h"
 
@@ -33,6 +33,11 @@
  * ========================================================================= */
 extern DS1307_Config_t Date_Time_RTC ;
 extern I2C_Configs_t * I2C_CONFIG	;
+extern uint8_t ReadingArr[ ] ;
+
+
+
+
 /* ========================================================================= *
  *                        MAIN APPLICATION SECTION                           *
  * ========================================================================= */
@@ -91,7 +96,10 @@ int main(void)
 		{
 
 		case DISPLAY_OPTION :
+	/* Read Date & Time */
+	Reading_Time();
 
+	Transmit_Time();
 			break ;
 
 		case SET_ALARM_OPTION :
