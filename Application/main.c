@@ -152,14 +152,17 @@ void SPI_CallBackFunc( void )
 /************************ SOURCE REVISION LOG *********************************
  *
  *    Date    Version   Author             Description
- *  16/08/23   1.0.0   Mohamemd Ayman    Initial Release ( INCLUDES )
- *  27/08/23   1.0.1   Mohammed Ayman    Program Basic Functionality
- *  28/08/23   1.1.0   Mohammed Ayman    Art Changes to Make Project More Prettier
- *  28/08/23   1.1.1   Mohammed Ayman    Adding A Service Layer & Well Documenting the Application Layer
- *
- *
- *
- *
+ *  25/08/23   1.0.0   Mohamemd Ayman    Initial Release ( INCLUDES ).
+ *  27/08/23   1.0.1   Mohammed Ayman    Program Basic Functionality.
+ *  27/08/23   1.0.0   Mohammed Wael     Implement Function For Reading From USART.
+ *	28/08/23   1.1.0   Mohammed Ayman    Art Changes to Make Project More Prettier.
+ *  28/08/23   1.1.0   Mohammed Wael     Implement Function to Calculate the Calender Given From User via USART.
+ *  28/08/23   1.1.1   Mohammed Ayman    Adding A Service Layer & Well Documenting the Application Layer.
+ *	29/08/23   1.1.1   Mohammed Wael     Implement Function to Check the Calender Given From User via USART and Send it to RTC.
+ *	29/08/23   1.1.2   Mohammed Ayman    Merging is Done of 2 branches on Develop Branch.	
+ *  30/08/23   1.1.2   Mohammed Wael     Solving The Conflicts and Pushing to Remote Repe. 
+ *	30/08/23   1.1.3   Mohammed Ayman    Trying The Application After Merging.
+ *	
  *
  *
  *
