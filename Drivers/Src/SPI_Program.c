@@ -1,909 +1,599 @@
 /*
- ******************************************************************************
- * @file           : SPI_Program.c
- * @Author         : Mohammed Ayman Shalaby
- * @brief          : Main program body for SPI driver
- * @Date           : Aug 20 , 2023
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2023 Ayman.
- * All rights reserved.
- *
- ******************************************************************************
+ *@file		:	SPI_Program.c
+ *@author	: 	Mohamed Wael
+ *@brief	:	Main Program body for SPI Peripheral
  */
 
-/*==============================================================================================================================================
- * INCLUDES SECTION START
- *==============================================================================================================================================*/
-
+/******************* MAIN INCLUDES *********************/
 #include <stdint.h>
+#include "../../LIBRARY/STM32F446xx.h"
+#include "../../LIBRARY/ErrTypes.h"
 
-#include "../../Library/ErrTypes.h"
-#include "../../Library/STM32F446xx.h"
 
 #include "../Inc/SPI_Interface.h"
 #include "../Inc/SPI_Private.h"
+/*******************************************************/
 
-/*==============================================================================================================================================
- * INCLUDES SECTION END
- *==============================================================================================================================================*/
 
-/*==============================================================================================================================================
- * GLOBAL VARIABLES SECTION START
- *==============================================================================================================================================*/
+/********************** MAIN PV ************************/
 
-/* SPI Peripherals Base Addresses */
-static SPI_RegDef_t *SPI[SPI_MAX_NUM] = {SPI1, SPI2 , SPI3 , SPI4};
+static SPI_REG_t * SPIs[MAX_SPIs_NUMBER]={SPI1,SPI2,SPI3,SPI4};
 
-/* SPI Interrupt Pointers to Functions */
-static void (*SPI_PTR_TO_FUNC[SPI_MAX_NUM][SPI_IT_MAX_NUM])(void) = {NULL};
+static uint8_t IRQ_Source[MAX_SPIs_NUMBER]={NO_SRC};
 
-/* SPI Transceive Data To Be Received To Use In ISR */
-static uint16_t *SPI_TransceiveDataToBeReceived[SPI_MAX_NUM] = {NULL};
+/*2D array of USARTs Call back functions*/
+static void (*SPI_pf_CallBackFuncs[MAX_SPIs_NUMBER][SPI_MAX_INTERRUPTS])(void)={NULL};
 
-/* SPI Transceive Buffer To Be Received To Use In ISR */
-static uint8_t *SPI_TransceiveBufferToBeReceived[SPI_MAX_NUM] = {NULL};
+/*Variable to Save the Data buffer size globally*/
+static uint8_t Global_Data_Size=0;
 
-/* SPI Transceive Buffer To Be Sent To Use In ISR */
-static uint8_t *SPI_TransceiveBufferToBeSent[SPI_MAX_NUM] = {NULL};
+/*Variable to Save the Data buffer globally*/
+static uint8_t* Global_Data_Buffer=NULL;
 
-/* SPI Transceive Buffer Size To Use In ISR */
-static uint16_t SPI_TransceiveBufferSize[SPI_MAX_NUM] = {0};
+/*Variable to Save the Received globally*/
+static uint16_t* Global_Received_Data=NULL;
+/*******************************************************/
 
-/* SPI Transceive Buffer Node Role To Check On In ISR */
-/* SPI_MASTER or SPI_SLAVE */
-static SPI_ROLE_t SPI_TransceiveBufferNodeRole[SPI_MAX_NUM] = {0};
+/****************** MAIN FUNCTIONS *********************/
 
-/* SPI Transceive Buffer Role Direction To Check On In ISR */
-/* SPI_ROLE_TRANSMIT or SPI_ROLE_RECEIVE */
-static SPI_ROLE_DIR_t SPI_TransceiveBufferRoleDirection[SPI_MAX_NUM] = {0};
+Error_State_t SPI_Init(const SPI_CONFIGS_t * SPI_Config)
+{
+	Error_State_t Error_State = OK;
+	/*Check Passed Configurations*/
+	if (OK == SPI_Check_Configs(SPI_Config))
+	{
+		/*1- Set Baud Rate Value if Master*/
+		if (SPI_Config->Chip_Mode == CHIP_MODE_MASTER)
+		{
+			SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((BAUD_RATE_MASK)<<BAUD_RATE_START_BITS);
+			SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->BaudRate_Value)<<BAUD_RATE_START_BITS);
+		}
+		/*2- Set Clock Polarity*/
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((CLOCK_POL_MASK)<<CLOCK_POL_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->Clock_Polarity)<<CLOCK_POL_START_BITS);
 
-/* SPI IRQ Sources To Use In ISR */
-/* SPI_NO_IRQ_SRC or SPI_TRANSCEIVE_DATA_IRQ_SRC or SPI_TRANSCEIVE_BUFFER_IRQ_SRC */
-static SPI_IRQ_SRC_t IRQ_SRC[SPI_MAX_NUM] = {SPI_NO_IRQ_SRC};
+		/*3- Set Clock Phase*/
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((CLOCK_PHASE_MASK)<<CLOCK_PHASE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->Clock_Phase)<<CLOCK_PHASE_START_BITS);
 
-/*==============================================================================================================================================
- * GLOBAL VARIABLES SECTION END
- *==============================================================================================================================================*/
+		/*4- Set Transfer Mode*/
+		if(SPI_Config->Transfer_Mode != TRANSFER_MODE_SIMPLEX)
+		{
+			SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((TRANSFER_MODE_MASK)<<TRANS_MODE_START_BITS);
+			SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->Transfer_Mode)<<TRANS_MODE_START_BITS);
+		}
+		else {
+			SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((RX_ONLY_MODE_MASK)<<RX_ONLY_START_BITS);
+			SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  (1<<RX_ONLY_START_BITS);
 
-/*==============================================================================================================================================
- * MODULES IMPLEMENTATION
- *==============================================================================================================================================*/
-/**
- * @brief  : This Function is Used to Initialize The SPI Peripheral According to The Required Configuration in The Configuration Struct
- *
- * @param  : Config => This is a Pointer to Struct of Type SPI_Config_t That Holds The Required Configuration
- * @return : ERRORS_t   => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- * @note   : This Function is Used to Initialize The SPI Peripheral According to The Required Configuration in The Configuration Struct
- *           Some of The Configuration Parameters are For Master Role Only Like ( BaudRate, SlaveSelectOutputType )
- *           and Some of The Configuration Parameters are For Slave Role Only Like ( SlaveManage )
- *           So You Should Select The Required Configuration Parameters According to The Required Role , Configurations For Different Roles has no Effect
+		}
+		/*5- Set Frame Format Type*/
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((FRAME_TYPE_MASK)<<FRAME_TYPE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->Frame_Type)<<FRAME_TYPE_START_BITS);
+
+		/*6- Set CRC Enable State*/
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((CRC_ENABLE_MASK)<<CRC_ENABLE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->CRC_State)<<CRC_ENABLE_START_BITS);
+
+		/*7- Set Slave Management state*/
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((SLAVE_MANAGE_MASK)<<SLAVE_MANAGE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->Slave_Manage_State)<<SLAVE_MANAGE_START_BITS);
+
+		/*8- Set CHIP State*/
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((CHIP_MODE_MASK)<<CHIP_MODE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->Chip_Mode)<<CHIP_MODE_START_BITS);
+
+		/*9- Set Data Frame SIZE*/
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 &= ~((FRAME_SIZE_MASK)<<FRAME_SIZE_START_BITS);
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((SPI_Config->Frame_Size)<<FRAME_SIZE_START_BITS);
+
+		/*10- Set MultiMaster Ability State if Master*/
+		if (SPI_Config->Chip_Mode == CHIP_MODE_MASTER)
+		{
+			SPIs[SPI_Config->SPI_Num]->SPI_CR2 &= ~((SSOE_MASK)<<SSOE_BIT_START);
+			SPIs[SPI_Config->SPI_Num]->SPI_CR2 |=  ((SPI_Config->MultiMaster_State)<<SSOE_BIT_START);
+		}
+		/*11- Enable SPI*/
+		SPIs[SPI_Config->SPI_Num]->SPI_CR1 |=  ((1)<<SPI_ENABLE_BIT_START);
+	}
+	else
+	{
+		Error_State = SPI_Check_Configs(SPI_Config);
+	}
+	return Error_State;
+}
+
+/*
+ * @function 		:	SPI_Transmit
+ * @brief			:	Transmit Data via SPI
+ * @param			:	SPI Number
+ * @param			:	pointer to Data Buffer
+ * @param 			: 	Data Buffer Size
+ * @retval			:	Error State
  */
-ERRORS_t SPI_Init(SPI_Config_t *Config)
+Error_State_t SPI_Transmit(const SPI_CONFIGS_t * SPI_Config, uint16_t * Data , uint8_t Buffer_Size)
 {
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
-
-    if (SPI_INVALID_CONFIG != SPI_CheckConfig(Config))
-    {
-
-        /* Set The BaudRate */
-        /* For Master Role Only */
-        if (Config->NodeRole == SPI_MASTER)
-        {
-            SPI[Config->SPINumber]->CR1 &= (SPI_BR_MASK);
-            SPI[Config->SPINumber]->CR1 |= (Config->BaudRate << SPI_BR);
-        }
-
-        /* Set Clock Polarity */
-        SPI[Config->SPINumber]->CR1 &= (~(1 << SPI_CPOL));
-        SPI[Config->SPINumber]->CR1 |= (Config->ClockPolarity << SPI_CPOL);
-
-        /* Set Clock Phase */
-        SPI[Config->SPINumber]->CR1 &= (~(1 << SPI_CPHA));
-        SPI[Config->SPINumber]->CR1 |= (Config->ClockPhase << SPI_CPHA);
-
-        /* Set The SPI Mode */
-        SPI_SetMode(Config);
-
-        /* Set Direction */
-        SPI[Config->SPINumber]->CR1 &= (~(1 << SPI_LSBFIRST));
-        SPI[Config->SPINumber]->CR1 |= (Config->Direction << SPI_LSBFIRST);
-
-        /* Set CRC Status */
-        SPI[Config->SPINumber]->CR1 &= (~(1 << SPI_CRCEN));
-        SPI[Config->SPINumber]->CR1 |= (Config->CRC_Status << SPI_CRCEN);
-
-        /* Set Slave Management */
-        /* For Slave Role Only */
-        if (Config->NodeRole == SPI_SLAVE)
-        {
-            SPI[Config->SPINumber]->CR1 &= (~(1 << SPI_SSM));
-            SPI[Config->SPINumber]->CR1 |= (Config->SlaveManage << SPI_SSM);
-        }
-
-        /* Set Node Role */
-        SPI[Config->SPINumber]->CR1 &= (~(1 << SPI_MSTR));
-        SPI[Config->SPINumber]->CR1 |= (Config->NodeRole << SPI_MSTR);
-
-        /* Set The Data Width */
-        SPI[Config->SPINumber]->CR1 &= (~(1 << SPI_DFF));
-        SPI[Config->SPINumber]->CR1 |= (Config->DataWidth << SPI_DFF);
-
-        /* Set Slave Select Output Type */
-        /* For Master Role Only */
-        if (Config->NodeRole == SPI_MASTER)
-        {
-            SPI[Config->SPINumber]->CR2 &= (~(1 << SPI_SSOE));
-            SPI[Config->SPINumber]->CR2 |= (Config->SlaveSelectOutputType << SPI_SSOE);
-        }
-
-        /* Configure SPI Interrupts */
-        SPI_ENABLE_IT(Config);
-
-        /* Enable SPI Peripheral */
-        SPI[Config->SPINumber]->CR1 |= (1 << SPI_SPE);
-    }
-    else
-    {
-        Local_u8ErrorStatus = SPI_NOK;
-    }
-    return Local_u8ErrorStatus;
+	Error_State_t 	Error_State = 	OK	;
+	uint8_t 	  	Counter	  	=	0 	;
+	uint8_t 	 	Flag_State  =	FLAG_RESET 	;
+	if (NULL != Data)
+	{
+		if (( SPI_Config->SPI_Num >=SPI_NUMBER1) && ( SPI_Config->SPI_Num <=SPI_NUMBER4))
+		{
+			/*Send the Data*/
+			while (Counter < Buffer_Size)
+			{
+				while (Flag_State != FLAG_SET)
+				{
+					Flag_State	=	GET_BIT(SPIs[SPI_Config->SPI_Num]->SPI_SR , SPI_FLAGS_TXE);
+				}
+				/*Put Data in DR*/
+				SPIs[SPI_Config->SPI_Num]->SPI_DR = *Data;
+				Counter++;
+			}
+		}
+		else {
+			Error_State = SPI_WRONG_SPI_NUMBER;
+		}
+	}
+	else {
+		Error_State = Null_Pointer ;
+	}
+	return Error_State	;
 }
-
-/**
- * @brief  : This Function is Used to Configure SPI Interrupts According to The Required Configuration in The Configuration Struct
- *
- * @param  : Config => This is a Pointer to Struct of Type SPI_Config_t That Holds The Required Configuration
- * @return : ERRORS_t => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- * @note   : This Function is Used Inside The SPI_Init Function , You Can Use it Independently if You Want to Change The Interrupts Configuration
+/*
+ * @function 		:	SPI_Receive
+ * @brief			:	Receive Data via SPI
+ * @param			:	Chip state (Master/Slave)
+ * @param			:	SPI Number
+ * @param			:	Buffer to save Data
+ * @param 			: 	Data Buffer Size
+ * @retval			:	Error State
  */
-ERRORS_t SPI_ENABLE_IT(SPI_Config_t *Config)
+Error_State_t SPI_Receive(const SPI_CONFIGS_t * SPI_Config, uint16_t * Received_Data ,uint8_t Buffer_Size)
 {
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
+	Error_State_t 	Error_State = 	OK	;
+	uint8_t 	  	Counter	  	=	0 	;
+	uint8_t 	 	Flag_State  =	FLAG_RESET 	;
+	if (NULL != Received_Data)
+	{
+		if ((SPI_Config->SPI_Num>=SPI_NUMBER1) && (SPI_Config->SPI_Num<=SPI_NUMBER4))
+		{
+			if (SPI_Config->Chip_Mode == CHIP_MODE_SLAVE)
+			{
+				while (Counter < Buffer_Size)
+				{
+					/*Wait till data is Received*/
+					while (Flag_State != FLAG_SET)
+					{
+						Flag_State	=	GET_BIT(SPIs[SPI_Config->SPI_Num]->SPI_SR , SPI_FLAGS_RXNE);
+					}
+					/*Read the Received data*/
+					Received_Data[Counter++] = SPIs[SPI_Config->SPI_Num]->SPI_DR ;
+				}
+			}
+			else if (SPI_Config->Chip_Mode == CHIP_MODE_MASTER)
+			{
+				while (Counter < Buffer_Size)
+				{
+					/* writing garbage in the Tx Buffer to start Receiving*/
+					SPIs[SPI_Config->SPI_Num]->SPI_DR = GARBAGE_VALUE;
+					/*Wait till data is Received*/
+					while (Flag_State != FLAG_SET)
+					{
+						Flag_State	=	GET_BIT(SPIs[SPI_Config->SPI_Num]->SPI_SR , SPI_FLAGS_RXNE);
+					}
+					/*Read the Received data*/
+					Received_Data[Counter++] = SPIs[SPI_Config->SPI_Num]->SPI_DR ;
+				}
+			}
+			else {
+				Error_State = SPI_WRONG_CHIP_MODE;
+			}
 
-    if (SPI_INVALID_CONFIG != SPI_CheckConfig(Config))
-    {
-        /* Set Tx Buffer Empty Interrupt */
-        SPI[Config->SPINumber]->CR2 &= (~(1 << SPI_TXEIE));
-        SPI[Config->SPINumber]->CR2 |= (Config->InterruptEnable.TXE << SPI_TXEIE);
-
-        /* Set Rx Buffer Not Empty Interrupt */
-        SPI[Config->SPINumber]->CR2 &= (~(1 << SPI_RXNEIE));
-        SPI[Config->SPINumber]->CR2 |= (Config->InterruptEnable.RXNE << SPI_RXNEIE);
-
-        /* Set Error Interrupt */
-        SPI[Config->SPINumber]->CR2 &= (~(1 << SPI_ERRIE));
-        SPI[Config->SPINumber]->CR2 |= (Config->InterruptEnable.ERR << SPI_ERRIE);
-    }
-    else
-    {
-        Local_u8ErrorStatus = SPI_NOK;
-    }
-    return Local_u8ErrorStatus;
+		}
+		else {
+			Error_State = SPI_WRONG_SPI_NUMBER;
+		}
+	}
+	else {
+		Error_State = Null_Pointer ;
+	}
+	return Error_State	;
 }
 
-/**
- * @brief  : This Function is Used to Read SPI Flag Status ( Set or Reset )
- *
- * @param  : SPINum => This Parameter is Used to Select The SPI Peripheral Number to Be Used -> @SPI_t
- * @param  : Flag  =>  This Parameter is Used to Select The Flag to Be Read -> @SPI_FLAG_t
- * @param  : FlagState => This Parameter is Used to Return The Flag State ( Set or Reset ) -> @SPI_FLAG_STATUS_t
- * @return : ERRORS_t => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
+/*
+ * @function 		:	SPI_Transmit_IT
+ * @brief			:	Transmit Data via SPI and
+ * 						generate interrupt when Transmission is complete
+ * @param			:	SPI Number
+ * @param			:	Data To Send
+ * @param 			: 	Data Buffer Size
+ * @param			:	CallBack Function
+ * @retval			:	Error State
  */
-ERRORS_t SPI_ReadFlag(SPI_t SPINum, SPI_FLAG_t Flag, SPI_FLAG_STATUS_t *FlagState)
+Error_State_t SPI_Transmit_IT(const SPI_CONFIGS_t * SPI_Config, uint8_t * Data , uint8_t Buffer_Size, void (* SPI_TXC_CallBackFunc)(void))
 {
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
+	Error_State_t 	Error_State = 	OK	;
+	if ((NULL != Data) && (NULL != SPI_TXC_CallBackFunc))
+	{
+		if (( SPI_Config->SPI_Num >=SPI_NUMBER1) && ( SPI_Config->SPI_Num <=SPI_NUMBER2))
+		{
+			/*Set IRQ Source*/
+			IRQ_Source[SPI_Config->SPI_Num] = SOURCE_TX;
 
-    if (SPINum < SPI1_APB2 || SPINum > SPI4_APB2 ||
-        Flag < SPI_RECEIVE_BUFFER_NE_FLAG || Flag > SPI_FRAME_ERROR_FLAG)
-    {
-        Local_u8ErrorStatus = SPI_NOK;
-    }
-    else
-    {
-        /* Correct Parameters */
-        if (NULL != FlagState)
-        {
-            /* Return The Flag State */
-            *FlagState = ((SPI[SPINum]->SR >> Flag) & 0x01);
-        }
-        else
-        {
-            Local_u8ErrorStatus = NULL_POINTER;
-        }
-    }
-    return Local_u8ErrorStatus;
+			/*Set Call Back Globally*/
+			SPI_pf_CallBackFuncs[SPI_Config->SPI_Num][SPI_FLAGS_TXE]= SPI_TXC_CallBackFunc ;
+
+			/*Set data to be sent globally*/
+			Global_Data_Buffer = Data ;
+
+			/*Set Buffer Size Globally*/
+			Global_Data_Size   = Buffer_Size;
+
+			/*wait till TDR is ready*/
+			while( ! (GET_BIT(SPIs[SPI_Config->SPI_Num]->SPI_SR,SPI_FLAGS_TXE) ) );
+
+			/*Put First Data in DR*/
+			SPIs[SPI_Config->SPI_Num]->SPI_DR = Data[0];
+
+			/*Enable Transmission complete interrupt*/
+			SPIs[SPI_Config->SPI_Num]->SPI_CR2 |= (1<<(SPI_INTERRUPT_TXEIE));
+
+		}
+		else {
+			Error_State = SPI_WRONG_SPI_NUMBER;
+		}
+	}
+	else {
+		Error_State = Null_Pointer ;
+	}
+	return Error_State	;
 }
 
-/**
- * @brief  : This Function is Activate or Deactivate a Slave Using the Software Slave Management
- *
- * @param  : Config => This is a Pointer to Struct of Type SPI_Config_t That Holds The Required Configuration
- * @param  : SlaveManagementState => This Parameter is Used to Select The Slave Management State -> @SPI_SW_SLAVE_STATUS_t
- * @return : ERRORS_t => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- * @note   : To Use This Function You Should Select The Slave Management in The Configuration Struct as ( SPI_SW_SLAVE_MANAGE ) to Activate or Deactivate The Slave By SW
- *            It's Used Only in The Slave Role & while only one Slave is Connected to The Master
+/*
+ * @function 		:	SPI_Receive_IT
+ * @brief			:	Receive Data via SPI and generate interrupt when receive is complete
+ * @param			:	Chip state (Master/Slave)
+ * @param			:	SPI Number
+ * @param			:	Buffer to save Data
+ * @param 			: 	Data Buffer Size
+ * @param			:	CallBack Function
+ * @retval			:	Error State
  */
-ERRORS_t SPI_SwSlaveManage(SPI_Config_t *Config, SPI_SW_SLAVE_STATUS_t SlaveManagementState)
+Error_State_t SPI_Receive_IT(const SPI_CONFIGS_t * SPI_Config, uint16_t * Received_Data ,uint8_t Buffer_Size , void (* SPI_RXC_CallBackFunc)(void))
 {
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
+	Error_State_t 	Error_State = 	OK	;
+	if ((NULL != Received_Data) && (NULL != SPI_RXC_CallBackFunc))
+	{
+		if (( SPI_Config->SPI_Num >=SPI_NUMBER1) && ( SPI_Config->SPI_Num <=SPI_NUMBER2))
+		{
+			/*Set Call Back Globally*/
+			SPI_pf_CallBackFuncs[SPI_Config->SPI_Num][SPI_FLAGS_RXNE]= SPI_RXC_CallBackFunc ;
 
-    if (Config->SPINumber < SPI1_APB2 || Config->SPINumber > SPI4_APB2 ||
-        SlaveManagementState < SPI_SLAVE_SELECTED || SlaveManagementState > SPI_SLAVE_NOT_SELECTED)
-    {
-        Local_u8ErrorStatus = SPI_NOK;
-    }
-    else
-    {
-        if (Config->NodeRole == SPI_SLAVE)
-        {
-            /* Correct Parameters */
-            if (SPI_SLAVE_SELECTED == SlaveManagementState)
-            {
-                /* Slave Selected */
-                SPI[Config->SPINumber]->CR1 &= (~(1 << SPI_SSI));
-            }
-            else
-            {
-                /* Slave Not Selected */
-                SPI[Config->SPINumber]->CR1 |= (1 << SPI_SSI);
-            }
-        }
-        else
-        {
-            Local_u8ErrorStatus = SPI_NOK;
-        }
-    }
-    return Local_u8ErrorStatus;
+			/*Set data to be RECEIVED globally*/
+			Global_Received_Data = Received_Data ;
+
+			/*Set Buffer Size Globally*/
+			Global_Data_Size   = Buffer_Size;
+
+			if (SPI_Config->Chip_Mode == CHIP_MODE_SLAVE)
+			{
+				/*Set IRQ Source*/
+				IRQ_Source[SPI_Config->SPI_Num] = SOURCE_RX_SLAVE;
+
+				/*Enable Receive complete Interrupt*/
+				SPIs[SPI_Config->SPI_Num]->SPI_CR2 |= (1<<(SPI_INTERRUPT_RXNEIE));
+
+			}
+			else if (SPI_Config->Chip_Mode == CHIP_MODE_MASTER)
+			{
+				/*Set IRQ Source*/
+				IRQ_Source[SPI_Config->SPI_Num] = SOURCE_RX_MASTER;
+				/* writing garbage in the Tx Buffer to start Receiving*/
+				SPIs[SPI_Config->SPI_Num]->SPI_DR = GARBAGE_VALUE;
+
+				/*Enable Receive complete Interrupt*/
+				SPIs[SPI_Config->SPI_Num]->SPI_CR2 |= (1<<(SPI_INTERRUPT_RXNEIE));
+			}
+			else {
+				Error_State = SPI_WRONG_CHIP_MODE;
+			}
+		}
+		else {
+			Error_State = SPI_WRONG_SPI_NUMBER;
+		}
+	}
+	else {
+		Error_State = Null_Pointer ;
+	}
+	return Error_State	;
+
+
 }
 
-/**
- * @brief  : This Function is Used to Change The SPI Node Role  in Half Duplex Mode ( Transmit or Receive )
- *
- * @param  : SPINum => This Parameter is Used to Select The SPI Peripheral Number to Be Used -> @SPI_t
- * @param  : Role => This Parameter is Used to Select The Role to Be Used -> @SPI_HALFDUPLEX_ROLE_t
- * @return : ERRORS_t => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- * @note   : This Function is Used with Half Duplex Mode Only
+/*
+ * @function 		:	SPI_Enable_DMA_RX
+ * @brief			:	Enable DMA Line for SPI Receiving
+ * @param			:	SPI NUMBER
+ * @retval			:	Error State
  */
-ERRORS_t SPI_HalfDuplexRoleChange(SPI_t SPINum, SPI_HALFDUPLEX_ROLE_t Role)
+Error_State_t SPI_Enable_DMA_RX(SPI_SPI_NUMBER_t SPI_Num)
 {
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
+	Error_State_t Error_State = OK;
 
-    if (SPINum < SPI1_APB2 || SPINum > SPI4_APB2 ||
-        Role < SPI_HALFDUPLEX_RECEIVE || Role > SPI_HALFDUPLEX_TRASNMIT)
-    {
-        Local_u8ErrorStatus = SPI_NOK;
-    }
-    else
-    {
-        /* Correct Parameters */
-        SPI[SPINum]->CR1 &= (~(1 << SPI_BIDIOE));
-        SPI[SPINum]->CR1 |= (Role << SPI_BIDIOE);
-    }
-    return Local_u8ErrorStatus;
+	if (( SPI_Num >=SPI_NUMBER1) && ( SPI_Num <=SPI_NUMBER4))
+	{
+		SPIs[SPI_Num]->SPI_CR2 |= (1<<(RXDMAEN_BIT));
+	}
+	else {
+		Error_State = SPI_WRONG_SPI_NUMBER;
+	}
+	return Error_State ;
 }
 
-/**
- * @brief  : This Function is Used to Enable DMA  Request Line Between SPI and DMA ( TX or RX )
- * @param  : SPINum => This Parameter is Used to Select The SPI Peripheral Number to Be Used -> @SPI_t
- * @param  : DMA_Line => This Parameter is Used to Select The DMA Line to Be Used -> @SPI_DMA_LINE_t
- * @return : ERRORS_t => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- * @note   : This Function is Used to Handle SPI Data Transmission Using DMA , You Should Call This Function Before Calling The SPI_Init Function
+/*
+ * @function 		:	SPI_Enable_DMA_TX
+ * @brief			:	Enable DMA Line for SPI Transmitting
+ * @param			:	SPI NUMBER
+ * @retval			:	Error State
  */
-ERRORS_t SPI_EnableDMALine(SPI_t SPINum, SPI_DMA_LINE_t DMA_Line)
+Error_State_t SPI_Enable_DMA_TX(SPI_SPI_NUMBER_t SPI_Num)
 {
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
+	Error_State_t Error_State = OK;
 
-    if (SPINum < SPI1_APB2 || SPINum > SPI4_APB2)
-    {
-        switch (DMA_Line)
-        {
-        case SPI_DMA_RX_LINE:
-            SPI[SPINum]->CR2 |= (1 << SPI_RXDMAEN);
-            break;
-
-        case SPI_DMA_TX_LINE:
-            SPI[SPINum]->CR2 |= (1 << SPI_TXDMAEN);
-            break;
-
-        default:
-            Local_u8ErrorStatus = SPI_NOK;
-            break;
-        }
-    }
-    else
-    {
-        Local_u8ErrorStatus = SPI_NOK;
-    }
-    return Local_u8ErrorStatus;
+	if (( SPI_Num >=SPI_NUMBER1) && ( SPI_Num <=SPI_NUMBER4))
+	{
+		SPIs[SPI_Num]->SPI_CR2 |= (1<<(TXDMAEN_BIT));
+	}
+	else {
+		Error_State = SPI_WRONG_SPI_NUMBER;
+	}
+	return Error_State ;
 }
 
-/**
- * @brief  : This Function is Used to Disable DMA Request Line Between SPI and DMA ( TX or RX )
- * @param  : SPINum => This Parameter is Used to Select The SPI Peripheral Number to Be Used -> @SPI_t
- * @param  : DMA_Line => This Parameter is Used to Select The DMA Line to Be Used -> @SPI_DMA_LINE_t
- * @return : ERRORS_t => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- * @note   : This Function is Used to Handle SPI Data Transmission Using DMA , You Should Call This Function Before Calling The SPI_Init Function
+/*
+ * @function 		:	SPI_Internal_Slave_Activate
+ * @brief			:	Enable Slave by itself
+ * @param			:	SPI NUMBER
+ * @param			:	Slave_State
+ * @retval			:	Error State
+ * @warning			:	this function is used only if the Chip mode is slave and
+ * 						SW Slave management is enabled
  */
-ERRORS_t SPI_DisableDMALine(SPI_t SPINum, SPI_DMA_LINE_t DMA_Line)
+Error_State_t SPI_SET_Internal_Slave_State(SPI_SPI_NUMBER_t SPI_Num, SLAVE_STATE_t Slave_State)
 {
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
+	Error_State_t Error_State = OK;
 
-    if (SPINum < SPI1_APB2 || SPINum > SPI4_APB2)
-    {
-        switch (DMA_Line)
-        {
-        case SPI_DMA_RX_LINE:
-            SPI[SPINum]->CR2 &= (~(1 << SPI_RXDMAEN));
-            break;
-
-        case SPI_DMA_TX_LINE:
-            SPI[SPINum]->CR2 &= (~(1 << SPI_TXDMAEN));
-            break;
-
-        default:
-            Local_u8ErrorStatus = SPI_NOK;
-            break;
-        }
-    }
-    else
-    {
-        Local_u8ErrorStatus = SPI_NOK;
-    }
-    return Local_u8ErrorStatus;
+	if (( SPI_Num >=SPI_NUMBER1) && ( SPI_Num <=SPI_NUMBER4))
+	{
+		if (Slave_State == SLAVE_STATE_ACTIVATED)
+		{
+			SPIs[SPI_Num]->SPI_CR1 &= ~(1<<(SSI_BIT));
+		}
+		else if (Slave_State == SLAVE_STATE_DEACTIVATED)
+		{
+			SPIs[SPI_Num]->SPI_CR1 |= (1<<(SSI_BIT));
+		}
+		else {
+			Error_State = WRONG_SLAVE_STATE;
+		}
+	}
+	else {
+		Error_State = SPI_WRONG_SPI_NUMBER;
+	}
+	return Error_State ;
 }
 
-/**
- * @brief  : This Function is Used to Wait Until a Flag is Set
- * @param  : SPINum => This Parameter is Used to Select The SPI Peripheral Number to Be Used -> @SPI_t
- * @param  : Flag => This Parameter is Used to Select The Flag to Be Read -> @SPI_FLAG_t
- * @return : ERRORS_t => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
+/***************End of MAIN FUNCTIONS*******************/
+
+/***************** STATIC FUNCTIONS ********************/
+
+/*
+ * @function 		:	SPI_Check_Configs
+ * @brief			:	Private Function To Check Passed SPI Configurations
+ * @param			:	SPI_Configs
+ * @retval			:	Error State
  */
-ERRORS_t SPI_WaitUntilFlagSet(SPI_t SPINum, SPI_FLAG_t Flag)
+static Error_State_t SPI_Check_Configs(const SPI_CONFIGS_t * SPI_Configs)
 {
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
+	Error_State_t Error_State = OK ;
 
-    SPI_FLAG_STATUS_t Local_u8FlagState = SPI_FLAG_RESET;
-
-    if (SPINum < SPI1_APB2 || SPINum > SPI4_APB2 ||
-        Flag < SPI_RECEIVE_BUFFER_NE_FLAG || Flag > SPI_BUSY_FLAG)
-    {
-        Local_u8ErrorStatus = SPI_NOK;
-    }
-    else
-    {
-        /* Correct Parameters */
-        while (SPI_FLAG_SET != Local_u8FlagState)
-        {
-            SPI_ReadFlag(SPINum, Flag, &Local_u8FlagState);
-        }
-    }
-    return Local_u8ErrorStatus;
+	if (NULL != SPI_Configs)
+	{
+		if ((SPI_Configs->SPI_Num >= SPI_NUMBER1)&&(SPI_Configs->SPI_Num <= SPI_NUMBER4))
+		{
+			if ((SPI_Configs->BaudRate_Value>=BAUDRATE_FpclkBY2)&&(SPI_Configs->BaudRate_Value<=BAUDRATE_FpclkBY256))
+			{
+				if((SPI_Configs->CRC_State == CRC_STATE_ENABLED)||(SPI_Configs->CRC_State == CRC_STATE_DISABLED))
+				{
+					if ((SPI_Configs->Chip_Mode == CHIP_MODE_MASTER)||(SPI_Configs->Chip_Mode == CHIP_MODE_SLAVE))
+					{
+						if ((SPI_Configs->Clock_Phase == CLOCK_PHASE_CAPTURE_SECOND)||(SPI_Configs->Clock_Phase == CLOCK_PHASE_CAPTURE_FIRST))
+						{
+							if ((SPI_Configs->Clock_Polarity == CLOCK_POLARITY_IDLE_LOW)||(SPI_Configs->Clock_Polarity == CLOCK_POLARITY_IDLE_HIGH))
+							{
+								if ((SPI_Configs->Frame_Size == DATA_FRAME_SIZE_16BITS)||(SPI_Configs->Frame_Size == DATA_FRAME_SIZE_8BITS))
+								{
+									if ((SPI_Configs->Frame_Type== FRAME_FORMAT_MSB_FIRST)||(SPI_Configs->Frame_Type == FRAME_FORMAT_LSB_FIRST))
+									{
+										if ((SPI_Configs->Slave_Manage_State >= SLAVE_MANAGE_HW)&&(SPI_Configs->Slave_Manage_State <= SLAVE_MANAGE_SW_SLAVE_INACTIVE))
+										{
+											if ((SPI_Configs->Transfer_Mode >= TRANSFER_MODE_FULL_DUPLEX)&&(SPI_Configs->Transfer_Mode <= TRANSFER_MODE_SIMPLEX))
+											{
+												if ((SPI_Configs->MultiMaster_State == MULTIMASTER_NOT_PROVIDED)||(SPI_Configs->MultiMaster_State == MULTIMASTER_PROVIDED))
+												{
+													Error_State = OK;
+												}
+												else {
+													Error_State =  SPI_WRONG_MULTIMASTER_STATE;
+												}
+											}
+											else {
+												Error_State = SPI_WRONG_TRANSFER_MODE ;
+											}
+										}
+										else {
+											Error_State = SPI_WRONG_SLAVE_MANAGE_STATE;
+										}
+									}
+									else{
+										Error_State = SPI_WRONG_FRAME_TYPE;
+									}
+								}
+								else{
+									Error_State = SPI_WRONG_FRAME_SIZE;
+								}
+							}
+							else{
+								Error_State = SPI_WRONG_CLOCK_POLARITY;
+							}
+						}
+						else {
+							Error_State = SPI_WRONG_CLOCK_PHASE;
+						}
+					}
+					else{
+						Error_State = SPI_WRONG_CHIP_MODE;
+					}
+				}
+				else {
+					Error_State = SPI_WRONG_CRC_STATE;
+				}
+			}
+			else {
+				Error_State = SPI_WRONG_BAUDRATE;
+			}
+		}
+		else {
+			Error_State = SPI_WRONG_SPI_NUMBER;
+		}
+	}
+	else {
+		Error_State = Null_Pointer;
+	}
+	return Error_State ;
 }
 
-/**
- * @brief  : This Function is Used to Send Data & Receive Data at The Same Time
- * @param  : Config => This is a Pointer to Struct of Type SPI_Config_t That Holds The Required Configuration
- * @param  : ReceivedData => This is a Pointer to uint16_t Variable That Holds The Received Data
- * @param  : DataToSend => This is a Pointer of Type uint16_t That Holds The Data to Be Sent
- * @return : ERRORS_t => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- * @note   : IF You Want to Send Data Only You Can Pass NULL to The ReceivedData Parameter ,
- *         IF You Want to Receive Data Only You Can NULL to The DataToSend Parameter
+/*
+ * @function 		:	SPI_IRQ_Source_HANDLE
+ * @brief			:	Private Function To handle the Different Sources of the IRQ
+ * @param			:	SPI_Num, The Enabled SPI Number
+ * @retval			:	Error State
  */
-
-ERRORS_t SPI_TransceiveData(SPI_Config_t *Config, uint16_t *ReceivedData, uint16_t *DataToSend)
+static void SPI_IRQ_Source_HANDLE(SPI_SPI_NUMBER_t SPI_Num)
 {
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
 
-    if (SPI_INVALID_CONFIG != SPI_CheckConfig(Config))
-    {
-        /* Sending Data is Required */
-        if (DataToSend != NULL)
-        {
-            /* Check on The Node Role ,  Both Master & Slave Can Send Data */
-            if (Config->NodeRole == SPI_MASTER || Config->NodeRole == SPI_SLAVE)
-            {
-                /* Wait Until The Transmit Buffer is Empty */
-                SPI_WaitUntilFlagSet(Config->SPINumber, SPI_TRANSMIT_BUFFER_E_FLAG);
+	if (IRQ_Source[SPI_Num] == SOURCE_TX)
+	{
+		static uint16_t Counter=1;
+		/*Complete buffer Transmission is done*/
+		if (Counter == Global_Data_Size)
+		{
+			/*Disable the TC interrupt*/
+			SPIs[SPI_Num]->SPI_CR2 &= ~(1<<(SPI_INTERRUPT_TXEIE));
 
-                /* Both Master & Slave Can Send Data */
-                SPI[Config->SPINumber]->DR = *DataToSend;
-            }
-        }
+			/*Clear IRQ Source*/
+			IRQ_Source[SPI_Num] = NO_SRC;
 
-        /* Receiving Data is Required */
-        if (ReceivedData != NULL)
-        {
-            if (Config->NodeRole == SPI_MASTER)
-            {
-                /* Wait Until The Transmit Buffer is Empty */
-                SPI_WaitUntilFlagSet(Config->SPINumber, SPI_TRANSMIT_BUFFER_E_FLAG);
+			/*Call The call Back Function*/
+			SPI_pf_CallBackFuncs[SPI_Num][SPI_FLAGS_TXE]();
+		}
 
-                /* Send Any Value to Initiate Communication */
-                SPI[Config->SPINumber]->DR = 0xFF;
+		/*Buffer isn't completely sent*/
+		else {
+			/*Send the next data element in the buffer*/
+			SPIs[SPI_Num]->SPI_DR = Global_Data_Buffer[Counter++];
+		}
+	}
+	else if (IRQ_Source[SPI_Num] == SOURCE_RX_SLAVE)
+	{
+		static uint16_t Counter=0;
+		/*Whole buffer Receiving is done*/
+		if (Global_Data_Size==1)
+		{
+			/*Disable the RXC interrupt*/
+			SPIs[SPI_Num]->SPI_CR2 &= ~(1<<(SPI_INTERRUPT_RXNEIE));
 
-                /* Wait Until The Receive Buffer is Not Empty */
-                SPI_WaitUntilFlagSet(Config->SPINumber, SPI_RECEIVE_BUFFER_NE_FLAG);
+			/*Clear IRQ Source*/
+			IRQ_Source[SPI_Num] = NO_SRC;
 
-                /* Read Received Data */
-                *ReceivedData = SPI[Config->SPINumber]->DR;
-            }
-            else if (Config->NodeRole == SPI_SLAVE)
-            {
-                /* Wait Until The Receive Buffer is Not Empty */
-                SPI_WaitUntilFlagSet(Config->SPINumber, SPI_RECEIVE_BUFFER_NE_FLAG);
+			/*Receive the next data element*/
+			Global_Received_Data[Counter++] = SPIs[SPI_Num]->SPI_DR;
 
-                /* Read Received Data */
-                *ReceivedData = SPI[Config->SPINumber]->DR;
-            }
-        }
-    }
-    else
-    {
-        Local_u8ErrorStatus = SPI_NOK;
-    }
-    return Local_u8ErrorStatus;
+			/*Call The call Back Function*/
+			SPI_pf_CallBackFuncs[SPI_Num][SPI_FLAGS_RXNE]();
+
+		}
+		else
+		{
+			if (Counter == Global_Data_Size)
+			{
+				/*Disable the RXC interrupt*/
+				SPIs[SPI_Num]->SPI_CR2 &= ~(1<<(SPI_INTERRUPT_RXNEIE));
+
+				/*Clear IRQ Source*/
+				IRQ_Source[SPI_Num] = NO_SRC;
+
+				/*Call The call Back Function*/
+				SPI_pf_CallBackFuncs[SPI_Num][SPI_FLAGS_RXNE]();
+			}
+			else {
+				/*Receive the next data element*/
+				Global_Received_Data[Counter++] = SPIs[SPI_Num]->SPI_DR;
+			}
+		}
+	}
+	else if (IRQ_Source[SPI_Num] == SOURCE_RX_MASTER)
+	{
+		static uint16_t Counter=0;
+		/*Whole buffer Receiving is done*/
+		if (Counter == Global_Data_Size)
+		{
+			/*Disable the RXC interrupt*/
+			SPIs[SPI_Num]->SPI_CR2 &= ~(1<<(SPI_INTERRUPT_RXNEIE));
+
+			/*Clear IRQ Source*/
+			IRQ_Source[SPI_Num] = NO_SRC;
+
+			/*Call The call Back Function*/
+			SPI_pf_CallBackFuncs[SPI_Num][SPI_FLAGS_RXNE]();
+		}
+		else {
+
+			/* writing garbage in the Tx Buffer to start Receiving*/
+			SPIs[SPI_Num]->SPI_DR = GARBAGE_VALUE;
+
+			/*Receive the next data element*/
+			Global_Received_Data[Counter++] = SPIs[SPI_Num]->SPI_DR;
+		}
+	}
+}
+/************** End of STATIC FUNCTIONS ****************/
+
+
+/********************* IRQ HANDLERS ********************/
+
+void SPI1_IRQHandler (void)
+{
+	SPI_IRQ_Source_HANDLE(SPI_NUMBER1);
 }
 
-/**
- * @brief  : This Function is Used to Send & Receive a Buffer of Data at The Same Time
- * @param  : Config => This is a Pointer to Struct of Type SPI_Config_t That Holds The Required Configuration
- * @param  : ReceviedBuffer => This is a Pointer to uint8_t Array That Holds The Received Data
- * @param  : BufferToSend => This is a Pointer to uint8_t Array That Holds The Data to Be Sent
- * @param  : BufferSize => This is a Variable of Type uint16_t That Holds The Size of The Buffer to Be Sent & Received
- * @return : ERRORS_t => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- * @note   : IF You Want to Send Data Only You Can Pass NULL to The ReceivedBuffer Parameter ,
- *      IF You Want to Receive Data Only You Can Pass NULL to The BufferToSend Parameter
- */
-ERRORS_t SPI_TransceiveBuffer(SPI_Config_t *Config, uint8_t *ReceviedBuffer, uint8_t *BufferToSend, uint16_t BufferSize)
+void SPI2_IRQHandler (void)
 {
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
-
-    uint16_t Local_u16Counter = 0;
-
-    if (Config->SPINumber < SPI1_APB2 || Config->SPINumber > SPI4_APB2)
-    {
-        Local_u8ErrorStatus = SPI_NOK;
-    }
-    else
-    {
-        /* Correct Parameters */
-
-        for (Local_u16Counter = 0; Local_u16Counter < BufferSize; Local_u16Counter++)
-        {
-            SPI_TransceiveData(Config, (uint16_t *)&ReceviedBuffer[Local_u16Counter], (uint16_t *)&BufferToSend[Local_u16Counter]);
-        }
-    }
-    return Local_u8ErrorStatus;
+	SPI_IRQ_Source_HANDLE(SPI_NUMBER2);
 }
 
-/**
- * @brief  : This Function is Used to Send & Receive Data Using Interrupts ( Non Blocking Function ) AKA Asynchronous
- *
- * @param  : Config => This is a Pointer to Struct of Type SPI_Config_t That Holds The Required Configuration
- * @param  : ReceivedData => This is a Pointer to uint16_t Variable That Holds The Received Data
- * @param  : DataToSend => This is a Pointer of Type uint16_t That Holds The Data to Be Sent
- * @param  : pv_CALL_BACK_FUNC => This is a Pointer to Function That Holds The Call Back Function Address
- * @return : ERRORS_t => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- * @note   : You Can Use This Function Directly without Enabling RXNE Interrupt in The Configuration Struct , as This Function Enables it Automatically
- *          IF You Want to Send Data Only You Can Pass NULL to The ReceivedData Parameter , IF You Want to Receive Data Only You Can NULL to The DataToSend Parameter
- */
-ERRORS_t SPI_TransceiveData_IT(SPI_Config_t *Config, uint16_t *ReceivedData, uint16_t *DataToSend, void(*pv_CALL_BACK_FUNC))
+void SPI3_IRQHandler (void)
 {
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
-
-    if (Config->SPINumber < SPI1_APB2 || Config->SPINumber > SPI4_APB2)
-    {
-        Local_u8ErrorStatus = SPI_NOK;
-    }
-    else
-    {
-        if (pv_CALL_BACK_FUNC != NULL)
-        {
-            /* Correct Parameters */
-
-            /* Setting IRQ Source */
-            IRQ_SRC[Config->SPINumber] = SPI_TRANSCEIVE_DATA_IRQ_SRC;
-
-            /* Set The Call Back Function */
-            SPI_PTR_TO_FUNC[Config->SPINumber][SPI_IT_RXNE] = pv_CALL_BACK_FUNC;
-
-            /* Receive Data is Required */
-            if (ReceivedData != NULL)
-            {
-                /* Set Received Data Globally */
-                SPI_TransceiveDataToBeReceived[Config->SPINumber] = ReceivedData;
-
-                /* Check on The Node Role */
-                /* Master Can't Receive Data , So Send Any Value to Initiate Communication */
-                if (Config->NodeRole == SPI_MASTER)
-                {
-                    /* Wait Until The Transmit Buffer is Empty */
-                    SPI_WaitUntilFlagSet(Config->SPINumber, SPI_TRANSMIT_BUFFER_E_FLAG);
-
-                    /* Send Any Value to Initiate Communication */
-                    SPI[Config->SPINumber]->DR = 0xFF;
-
-                    /* Enable Rx Buffer Not Empty Interrupt */
-                    SPI[Config->SPINumber]->CR2 |= (1 << SPI_RXNEIE);
-                }
-                else if (Config->NodeRole == SPI_SLAVE)
-                {
-                    /* Enable Rx Buffer Not Empty Interrupt */
-                    SPI[Config->SPINumber]->CR2 |= (1 << SPI_RXNEIE);
-                }
-                /* Both Master & Slave Can Receive Data By Enabling Rx Buffer Not Empty Interrupt */
-            }
-            /* Sending Data is Required */
-            if (DataToSend != NULL)
-            {
-                /* Both Master & Slave Can Send Data */
-                /* Send Data */
-                SPI[Config->SPINumber]->DR = *DataToSend;
-
-                /* Enable Rx Buffer Not Empty Interrupt */
-                SPI[Config->SPINumber]->CR2 |= (1 << SPI_RXNEIE);
-            }
-        }
-        else
-        {
-            Local_u8ErrorStatus = NULL_POINTER;
-        }
-    }
-    return Local_u8ErrorStatus;
+	SPI_IRQ_Source_HANDLE(SPI_NUMBER3);
 }
 
-/**
- * @brief  : This Function is Used to Send & Receive a Buffer of Data Using Interrupts ( Non Blocking Function ) AKA Asynchronous
- *
- * @param  : Config => This is a Pointer to Struct of Type SPI_Config_t That Holds The Required Configuration
- * @param  : ReceivedBuffer => This is a Pointer to uint8_t Array That Holds The Received Data
- * @param  : BufferToSend => This is a Pointer to uint8_t Array That Holds The Data to Be Sent
- * @param  : BufferSize => This is a Variable of Type uint16_t That Holds The Size of The Buffer to Be Sent & Received
- * @param  : pv_CallBackFunc => This is a Pointer to Function That Holds The Call Back Function Address
- * @return : ERRORS_t => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- * @note   : You Can Use This Function Directly without Enabling RXNE Interrupt in The Configuration Struct , as This Function Enables it Automatically
- *         if You Want to Send Data Only You Can Pass NULL to The ReceivedBuffer Parameter , IF You Want to Receive Data Only You Can NULL to The BufferToSend Parameter
- */
-ERRORS_t SPI_TransceiveBuffer_IT(SPI_Config_t *Config, uint8_t *ReceivedBuffer, uint8_t *BufferToSend, uint16_t BufferSize, void (*pv_CallBackFunc)(void))
+void SPI4_IRQHandler (void)
 {
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
-
-    if (Config->SPINumber < SPI1_APB2 || Config->SPINumber > SPI4_APB2)
-    {
-        Local_u8ErrorStatus = SPI_NOK;
-    }
-    else
-    {
-        /* Correct Parameters */
-        /* Set IRQ Source */
-        IRQ_SRC[Config->SPINumber] = SPI_TRANSCEIVE_BUFFER_IRQ_SRC;
-
-        /* Set Call Back Function */
-        SPI_PTR_TO_FUNC[Config->SPINumber][SPI_IT_RXNE] = pv_CallBackFunc;
-
-        /* Set Buffer Size Globally */
-        SPI_TransceiveBufferSize[Config->SPINumber] = BufferSize;
-
-        /* Receive Buffer is Required */
-        if (NULL != ReceivedBuffer)
-        {
-            /* Set Direction Globally */
-            SPI_TransceiveBufferRoleDirection[Config->SPINumber] = SPI_ROLE_RECEIVE;
-
-            /* Set ReceivedBuffer Globally */
-            SPI_TransceiveBufferToBeReceived[Config->SPINumber] = ReceivedBuffer;
-
-            /* Check on The Node Role */
-            if (Config->NodeRole == SPI_SLAVE)
-            {
-                /* Set Role Globally */
-                SPI_TransceiveBufferNodeRole[Config->SPINumber] = SPI_SLAVE;
-
-                /* Enable Receive Buffer Not Empty Interrupt */
-                SPI[Config->SPINumber]->CR2 |= (1 << SPI_RXNEIE);
-            }
-            else if (Config->NodeRole == SPI_MASTER)
-            {
-                /* Set Role Globally */
-                SPI_TransceiveBufferNodeRole[Config->SPINumber] = SPI_MASTER;
-
-                /* Wait Until The Transmit Buffer is Empty */
-                SPI_WaitUntilFlagSet(Config->SPINumber, SPI_TRANSMIT_BUFFER_E_FLAG);
-
-                /* Send Any Value to Initiate Communication */
-                SPI[Config->SPINumber]->DR = 0xFF;
-
-                /* Enable Receive Buffer Not Empty Interrupt */
-                SPI[Config->SPINumber]->CR2 |= (1 << SPI_RXNEIE);
-            }
-        }
-
-        /* Sending Buffer is Required */
-        if (BufferToSend != NULL)
-        {
-            /* Set Direction Globally */
-            SPI_TransceiveBufferRoleDirection[Config->SPINumber] = SPI_ROLE_TRANSMIT;
-
-            /* Set Buffer To Send Globally */
-            SPI_TransceiveBufferToBeSent[Config->SPINumber] = BufferToSend;
-
-            /* wait Until The Transmit Buffer is Empty */
-            SPI_WaitUntilFlagSet(Config->SPINumber, SPI_TRANSMIT_BUFFER_E_FLAG);
-
-            /* Send First Data Item */
-            SPI[Config->SPINumber]->DR = SPI_TransceiveBufferToBeSent[Config->SPINumber][0];
-
-            /* Enable Receive Buffer Not Empty Interrupt */
-            SPI[Config->SPINumber]->CR2 |= (1 << SPI_RXNEIE);
-        }
-    }
-    return Local_u8ErrorStatus;
+	SPI_IRQ_Source_HANDLE(SPI_NUMBER4);
 }
 
-/**
- * @brief  : This Function is Used to Set The SPI Mode According to The Required Configuration in The Configuration Struct
- *
- * @param  : Config => This is a Pointer to Struct of Type SPI_Config_t That Holds The Required Configuration
- * @return : ERRORS_t   => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- * @note   : Private Function Used Inside The SPI_Init Function
- */
-static ERRORS_t SPI_SetMode(SPI_Config_t *Config)
-{
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
-    if (Config != NULL)
-    {
-        switch (Config->Mode)
-        {
-        case SPI_FULL_DUPLEX:
-            SPI[Config->SPINumber]->CR1 &= (~(1 << SPI_BIDIMODE));
-            SPI[Config->SPINumber]->CR1 &= (~(1 << SPI_RXONLY));
-            break;
 
-        case SPI_HALF_DUPLEX_TX:
-            SPI[Config->SPINumber]->CR1 |= (1 << SPI_BIDIMODE);
-            SPI[Config->SPINumber]->CR1 |= (1 << SPI_BIDIOE);
-            break;
 
-        case SPI_HALF_DUPLEX_RX:
-            SPI[Config->SPINumber]->CR1 |= (1 << SPI_BIDIMODE);
-            SPI[Config->SPINumber]->CR1 &= (~(1 << SPI_BIDIOE));
-            break;
-
-        case SPI_SIMPLEX_TX:
-            SPI[Config->SPINumber]->CR1 &= (~(1 << SPI_BIDIMODE));
-            SPI[Config->SPINumber]->CR1 &= (~(1 << SPI_RXONLY));
-            break;
-
-        case SPI_SIMPLEX_RX:
-            SPI[Config->SPINumber]->CR1 &= (~(1 << SPI_BIDIMODE));
-            SPI[Config->SPINumber]->CR1 |= (1 << SPI_RXONLY);
-            break;
-
-        default:
-            Local_u8ErrorStatus = SPI_NOK;
-            break;
-        }
-    }
-    else
-    {
-        Local_u8ErrorStatus = NULL_POINTER;
-    }
-    return Local_u8ErrorStatus;
-}
-
-/**
- * @brief  : This Function is Used to Check on SPI Configuration Structure Before Passing it to The SPI_Init Function
- *
- * @param  : Configuration => This is a Pointer to Struct of Type SPI_Config_t That Holds The Required Configuration
- * @return : ERRORS_t     => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- */
-static ERRORS_t SPI_CheckConfig(SPI_Config_t *Configuration)
-{
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
-
-    if (Configuration->SPINumber < SPI1_APB2 || Configuration->SPINumber > SPI4_APB2 ||
-        Configuration->BaudRate < SPI_PERIPH_CLK_BY2 || Configuration->BaudRate > SPI_PERIPH_CLK_BY256 ||
-        Configuration->ClockPhase < SPI_CAPTURE_LEADING || Configuration->ClockPhase > SPI_CAPTURE_TRAILING ||
-        Configuration->ClockPolarity < SPI_CLK_IDLE_LOW || Configuration->ClockPolarity > SPI_CLK_IDLE_HIGH ||
-        Configuration->DataWidth < SPI_1BYTE || Configuration->DataWidth > SPI_2BYTE ||
-        Configuration->Direction < SPI_MSB_FIRST || Configuration->Direction > SPI_LSB_FIRST ||
-        Configuration->CRC_Status < SPI_CRC_DIS || Configuration->CRC_Status > SPI_CRC_EN ||
-        Configuration->Mode < SPI_FULL_DUPLEX || Configuration->Mode > SPI_SIMPLEX_RX ||
-        Configuration->NodeRole < SPI_SLAVE || Configuration->NodeRole > SPI_MASTER ||
-        Configuration->SlaveManage < SPI_HW_SLAVE_MANAGE || Configuration->SlaveManage > SPI_SW_SLAVE_MANAGE ||
-        Configuration->SlaveSelectOutputType < SPI_SS_OUT_DIS || Configuration->SlaveSelectOutputType > SPI_SS_OUT_EN ||
-        Configuration->InterruptEnable.RXNE < SPI_IT_DIS || Configuration->InterruptEnable.RXNE > SPI_IT_EN ||
-        Configuration->InterruptEnable.TXE < SPI_IT_DIS || Configuration->InterruptEnable.TXE > SPI_IT_EN ||
-        Configuration->InterruptEnable.ERR < SPI_IT_DIS || Configuration->InterruptEnable.ERR > SPI_IT_EN)
-    {
-        Local_u8ErrorStatus = SPI_INVALID_CONFIG;
-    }
-
-    return Local_u8ErrorStatus;
-}
-
-/**
- * @brief  : This Function is Used to Handle The SPI Interrupts
- *
- * @param  : SPINumber => This Parameter is Used to Select The SPI Peripheral Number to Be Used -> @SPI_t
- * @return : ERRORS_t => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- * @note   : This Function is Used Inside The SPI Interrupt Handlers (Private Function)
- */
-static ERRORS_t SPI_HANDLE_IT(SPI_t SPINumber)
-{
-    ERRORS_t Local_u8ErrorStatus = SPI_OK;
-
-    if (SPINumber < SPI1_APB2 || SPINumber > SPI4_APB2)
-    {
-        Local_u8ErrorStatus = SPI_NOK;
-    }
-    else
-    {
-        /* Correct Parameter */
-
-        /* IF The IRQ Source is Transceive Data */
-        if (IRQ_SRC[SPINumber] == SPI_TRANSCEIVE_DATA_IRQ_SRC)
-        {
-            /* Clear IRQ Source */
-            IRQ_SRC[SPINumber] = SPI_NO_IRQ_SRC;
-
-            /* Reading is Required Only */
-            /* Read the Received Data */
-            if (SPI_TransceiveDataToBeReceived[SPINumber] != NULL)
-            {
-                *SPI_TransceiveDataToBeReceived[SPINumber] = SPI[SPINumber]->DR;
-            }
-
-            /* Disable  Rx Buffer Not Empty Interrupt */
-            SPI[SPINumber]->CR2 &= (~(1 << SPI_RXNEIE));
-
-            /* Invoke Call Back Function */
-            if (SPI_PTR_TO_FUNC[SPINumber][SPI_IT_RXNE] != NULL)
-            {
-                SPI_PTR_TO_FUNC[SPINumber][SPI_IT_RXNE]();
-            }
-        }
-
-        /* IF The IRQ Source is Transceive Buffer */
-        if (IRQ_SRC[SPINumber] == SPI_TRANSCEIVE_BUFFER_IRQ_SRC)
-        {
-            /* Variable to Indicate if The Buffer Size is Reached or Not */
-            static uint8_t BufferSizeReached = SPI_BUFFER_SIZE_NOT_REACHED;
-
-            /* Counter to Indicate The Number of Data Sent or Received For Slave Role */
-            static uint16_t TransmitCounterSlave = 1;
-            static uint16_t ReceiveCounterSlave = 0;
-
-            /* Counter to Indicate The Number of Data Sent or Received For Master Role */
-            static uint16_t TransmitCounterMaster = 1;
-            static uint16_t ReceiveCounterMaster = 0;
-
-            switch (SPI_TransceiveBufferNodeRole[SPINumber])
-            {
-            case SPI_SLAVE:
-
-                /* Slave is Transmitter */
-                if (SPI_TransceiveBufferRoleDirection[SPINumber] == SPI_ROLE_TRANSMIT)
-                {
-
-                    /* if Buffer Size is Reached */
-                    if (TransmitCounterSlave == SPI_TransceiveBufferSize[SPINumber])
-                    {
-                        BufferSizeReached = SPI_BUFFER_SIZE_REACHED;
-                        /* Reset Counter */
-                        TransmitCounterSlave = 1;
-                    }
-                    else
-                    {
-                        /* Send Next Data */
-                        SPI[SPINumber]->DR = SPI_TransceiveBufferToBeSent[SPINumber][TransmitCounterSlave++];
-                    }
-                }
-                /* Slave is Receiver */
-                else if (SPI_TransceiveBufferRoleDirection[SPINumber] == SPI_ROLE_RECEIVE)
-                {
-
-                    /* Receive the Data */
-                    SPI_TransceiveBufferToBeReceived[SPINumber][ReceiveCounterSlave++] = SPI[SPINumber]->DR;
-
-                    /* if Buffer Size is Reached */
-                    if (ReceiveCounterSlave == SPI_TransceiveBufferSize[SPINumber])
-                    {
-                        BufferSizeReached = SPI_BUFFER_SIZE_REACHED;
-                        /* Reset Counter */
-                        ReceiveCounterSlave = 0;
-                    }
-                }
-
-                break;
-
-            case SPI_MASTER:
-
-                /* Master is Transmitter */
-                if (SPI_TransceiveBufferRoleDirection[SPINumber] == SPI_ROLE_TRANSMIT)
-                {
-                    if (TransmitCounterMaster == SPI_TransceiveBufferSize[SPINumber])
-                    {
-                        BufferSizeReached = SPI_BUFFER_SIZE_REACHED;
-                        /* Reset Counter */
-                        TransmitCounterMaster = 1;
-                    }
-                    else
-                    {
-                        /* Send Next Data */
-                        SPI[SPINumber]->DR = SPI_TransceiveBufferToBeSent[SPINumber][TransmitCounterMaster++];
-                    }
-                }
-                /* Master is Receiver */
-                else if (SPI_TransceiveBufferRoleDirection[SPINumber] == SPI_ROLE_RECEIVE)
-                {
-
-                    /* Receive the Data */
-                    SPI_TransceiveBufferToBeReceived[SPINumber][ReceiveCounterMaster++] = SPI[SPINumber]->DR;
-
-                    if (ReceiveCounterMaster == SPI_TransceiveBufferSize[SPINumber])
-                    {
-                        BufferSizeReached = SPI_BUFFER_SIZE_REACHED;
-                        /* Reset Counter */
-                        ReceiveCounterMaster = 0;
-                    }
-                    else
-                    {
-                        /* Send Any Value to Initiate Communication */
-                        SPI[SPINumber]->DR = 0xFF;
-                    }
-                }
-                break;
-            }
-            /* If Buffer Size is Reached  , Disable Rx Buffer Not Empty Interrupt & Invoke Call Back Function */
-            if (BufferSizeReached == SPI_BUFFER_SIZE_REACHED)
-            {
-
-                /* Clear IRQ Source */
-                IRQ_SRC[SPINumber] = SPI_NO_IRQ_SRC;
-
-                /* Disable  Rx Buffer Not Empty Interrupt */
-                SPI[SPINumber]->CR2 &= (~(1 << SPI_RXNEIE));
-
-                /* Invoke Call Back Function */
-                if (SPI_PTR_TO_FUNC[SPINumber][SPI_IT_RXNE] != NULL)
-                {
-                    SPI_PTR_TO_FUNC[SPINumber][SPI_IT_RXNE]();
-                }
-                /* Reset Variables*/
-                BufferSizeReached = SPI_BUFFER_SIZE_NOT_REACHED;
-            }
-        }
-    }
-    return Local_u8ErrorStatus;
-}
-
-/* ======================================================================
- * INTERRUPT HANDLERS
- * ====================================================================== */
-
-/* SPI1 Interrupt Handler */
-void SPI1_IRQHandler(void)
-{
-    SPI_HANDLE_IT(SPI1_APB2);
-}
-
-/* SPI2 Interrupt Handler */
-void SPI2_IRQHandler(void)
-{
-    SPI_HANDLE_IT(SPI2_APB1);
-}
-
-/* SPI3 Interrupt Handler */
-void SPI3_IRQHandler(void)
-{
-    SPI_HANDLE_IT(SPI3_APB1);
-}
-
-/* SPI4 Interrupt Handler */
-void SPI4_IRQHandler(void)
-{
-    SPI_HANDLE_IT(SPI4_APB2);
-}
+/****************** End OF IRQ HANDLERS ****************/

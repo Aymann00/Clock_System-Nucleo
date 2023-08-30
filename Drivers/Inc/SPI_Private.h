@@ -1,93 +1,76 @@
 /*
- ******************************************************************************
- * @file           : SPI_Private.h
- * @Author         : Mohammed Ayman Shalaby
- * @brief          : Private File For SPI Driver
- * @Date           : Aug 20, 2023
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2023 Ayman.
- * All rights reserved.
- *
- ******************************************************************************
+ *@file		:	SPI_Private.h
+ *@author	: 	Mohamed Wael
+ *@brief	:	Main Private Defines FOR SPI Peripheral
  */
 
-#ifndef USART_PRIVATE_H_
-#define USART_PRIVATE_H_
+#ifndef SPI_INC_SPI_PRIVATE_H_
+#define SPI_INC_SPI_PRIVATE_H_
 
-/* ======================================================================
- * PRIVATE FUNCTION
- * ====================================================================== */
+/***************** STATIC FUNCTIONS ********************/
 
-/**
- * @brief  : This Function is Used to Check on SPI Configuration Structure Before Passing it to The SPI_Init Function
- *
- * @param  : Configuration => This is a Pointer to Struct of Type SPI_Config_t That Holds The Required Configuration
- * @return : ERRORS_t     => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
+/*
+ * @function 		:	SPI_Check_Configs
+ * @brief			:	Private Function To Check Passed SPI Configurations
+ * @param			:	SPI_Configs
+ * @retval			:	Error State
  */
-static ERRORS_t SPI_CheckConfig(SPI_Config_t *Configuration);
+static Error_State_t SPI_Check_Configs(const SPI_CONFIGS_t * SPI_Configs);
 
-/**
- * @brief  : This Function is Used to Set The SPI Mode According to The Required Configuration in The Configuration Struct
- *
- * @param  : Config => This is a Pointer to Struct of Type SPI_Config_t That Holds The Required Configuration
- * @return : ERRORS_t   => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- * @note   : Private Function Used Inside The SPI_Init Function
+/*
+ * @function 		:	SPI_IRQ_Source_HANDLE
+ * @brief			:	Private Function To handle the Different Sources of the IRQ
+ * @param			:	SPI_Num, The Enabled SPI Number
+ * @retval			:	Error State
  */
-static ERRORS_t SPI_SetMode(SPI_Config_t *Config);
+static void SPI_IRQ_Source_HANDLE(SPI_SPI_NUMBER_t SPI_Num);
+/************** End of STATIC FUNCTIONS ****************/
 
-/**
- * @brief  : This Function is Used to Handle The SPI Interrupts
- *
- * @param  : SPINumber => This Parameter is Used to Select The SPI Peripheral Number to Be Used -> @SPI_t
- * @return : ERRORS_t => This Return Parameter is Used to Indicate The Function Execution If Executed Correctly or NOT
- * @note   : This Function is Used Inside The SPI Interrupt Handlers (Private Function)
- */
-static ERRORS_t SPI_HANDLE_IT(SPI_t SPINumber);
+/*****************Private Defines***********************/
+#define MAX_SPIs_NUMBER	4
 
-/* ======================================================================
- * PRIVATE MACROS
- * ====================================================================== */
+#define BAUD_RATE_START_BITS	3u
+#define BAUD_RATE_MASK			0b111
 
-#define SPI_BR_MASK 0xFFC7
+#define CLOCK_POL_MASK			1u
+#define CLOCK_POL_START_BITS	1u
 
-#define SPI_BUFFER_SIZE_NOT_REACHED 0x00
-#define SPI_BUFFER_SIZE_REACHED 0x01
+#define CLOCK_PHASE_START_BITS	0u
+#define CLOCK_PHASE_MASK		1u
 
-/* ======================================================================
- * PRIVATE ENUMS
- * ====================================================================== */
+#define TRANSFER_MODE_MASK		0b11
+#define TRANS_MODE_START_BITS	14u
 
-/**
- * @brief  : This Enum is Used to Specify The SPI Interrupts
- */
-typedef enum
-{
-    SPI_IT_TXE = 0x00,
-    SPI_IT_RXNE = 0x01,
-    SPI_IT_ERR = 0x02,
-    SPI_IT_MAX_NUM = 0x03
+#define RX_ONLY_MODE_MASK		1
+#define RX_ONLY_START_BITS		10
 
-} SPI_IT_SRC_t;
+#define FRAME_TYPE_MASK			1u
+#define FRAME_TYPE_START_BITS	7u
 
-/**
- * @brief  : This Enum is Used to Specify The SPI Interrupt Sources
- */
-typedef enum
-{
-    SPI_NO_IRQ_SRC = 0x00,
-    SPI_TRANSCEIVE_DATA_IRQ_SRC = 0x01,
-    SPI_TRANSCEIVE_BUFFER_IRQ_SRC = 0x02,
+#define CRC_ENABLE_MASK			1u
+#define CRC_ENABLE_START_BITS	13u
 
-} SPI_IRQ_SRC_t;
+#define SLAVE_MANAGE_START_BITS	8u
+#define SLAVE_MANAGE_MASK		0b11
 
-typedef enum
-{
-    SPI_ROLE_TRANSMIT = 0x00,
-    SPI_ROLE_RECEIVE = 0x01,
-} SPI_ROLE_DIR_t;
+#define CHIP_MODE_START_BITS	2u
+#define CHIP_MODE_MASK			1u
 
+#define FRAME_SIZE_START_BITS	11u
+#define FRAME_SIZE_MASK			1u
 
+#define SSOE_MASK				1u
+#define SSOE_BIT_START			2u
 
-#endif /* USART_PRIVATE_H_ */
+#define SPI_ENABLE_BIT_START	6
+
+#define GARBAGE_VALUE			0
+
+#define SPI_MAX_INTERRUPTS		3
+
+#define RXDMAEN_BIT				0
+#define TXDMAEN_BIT				1
+
+#define	SSI_BIT					8
+
+#endif /* SPI_INC_SPI_PRIVATE_H_ */
