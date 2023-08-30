@@ -21,23 +21,17 @@
 #include "../Library/ErrTypes.h"
 #include "../Library/STM32F446xx.h"
 
-#include "../Drivers/Inc/RCC_Interface.h"
-#include "../Drivers/Inc/GPIO_Interface.h"
 #include "../Drivers/Inc/NVIC_Interface.h"
-#include "../Drivers/Inc/SCB_Interface.h"
-#include "../Drivers/Inc/DMA_Interface.h"
-#include "../Drivers/Inc/EXTI_Interface.h"
-#include "../Drivers/Inc/SYSCFG_Interface.h"
-#include "../Drivers/Inc/I2C_Interface.h"
-#include "../Drivers/Inc/SPI_Interface.h"
-#include "../Drivers/Inc/UART_Interface.h"
-#include "../Drivers/Inc/SYSTICK_Interface.h"
-
-#include "../HAL/Inc/DS1307_Interface.h"
+#include "../Service/Inc/Service.h"
 
 /* ========================================================================= *
  *                        GLOBAL VARIABLES SECTION                           *
  * ========================================================================= */
+
+extern uint8_t ReadingArr[ ] ;
+
+
+
 
 
 /* ========================================================================= *
@@ -60,14 +54,33 @@
 int main(void)
 {
 
-    /* Loop forever */
+	NVIC_EnableIRQ(SPI1_IRQ ) ;
+
+	Clock_Init( ) ;
+
+	Pins_Periph_Init( ) ;
+
+	/* Read Date & Time */
+	Reading_Time();
+
+	Transmit_Time();
+
+	/* Loop forever */
 	for(;;);
 }
 
-/* ========================================================================= *
- *                    FUNCTIONS IMPLEMENTATION SECTION                       *
- * ========================================================================= */
 
+
+
+
+
+
+
+
+void SPI_CALL_BACK(void)
+{
+
+}
 
 
 /************************ SOURCE REVISION LOG *********************************
