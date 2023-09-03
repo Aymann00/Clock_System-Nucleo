@@ -101,21 +101,27 @@ ID_PASS_EQUALITY_t TryAgain ( uint8_t * ID_Ptr , uint8_t * Pass_Ptr ) ;
 void SPI_CallBackFunc( void ) ;
 
 void Check_LoginInfo( uint8_t * ID_Ptr , uint8_t * Pass_Ptr , uint8_t TriesNumber  ) ;
+
 Error_State_t ReadDateTime_FromPC(void) ;
 
 void Interrupts_Init( void ) ;
+
 static DS1307_DAYS_t FindDay(uint8_t * Calender);
 
 void Check_IF_ContinueisNeeded( void );
+
 static void Calculate_Calender(DS1307_Config_t * Date_Time_To_RTC,uint8_t * Date_Time_From_USART);
 
 void WRONG_OptionChoosen ( void ) ;
+
 static Error_State_t Check_Calender(DS1307_Config_t * Date_Time_To_RTC);
 
 void ShutDown_Sequence( void ) ;
+
 void Reading_Time(void);
 
 void Transmit_Time(void);
 
 void SPI_CALL_BACK(void);
+
 #endif /* INC_SERVICE_H_ */

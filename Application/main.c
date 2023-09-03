@@ -96,10 +96,10 @@ int main(void)
 		{
 
 		case DISPLAY_OPTION :
-	/* Read Date & Time */
-	Reading_Time();
+			/* Read Date & Time */
+			Reading_Time();
 
-	Transmit_Time();
+			Transmit_Time();
 			break ;
 
 		case SET_ALARM_OPTION :

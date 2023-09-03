@@ -43,12 +43,15 @@
  * ========================================================================= */
 
 uint8_t ReadingArr[7]={ 0 } ;
+
 UART_Config_t * UART_CONFIG ;
+
 DS1307_Config_t Date_Time_RTC ;
 
 SPI_CONFIGS_t * SPI_CONFIG ;
 
 I2C_Configs_t * I2C_CONFIG ;
+
 DS1307_Config_t *ReadingStruct ;
 /* ========================================================================= *
  *                    FUNCTIONS IMPLEMENTATION SECTION                       *
@@ -102,7 +105,7 @@ void Check_IF_ContinueisNeeded( void )
 void Check_LoginInfo( uint8_t * ID_Ptr , uint8_t * Pass_Ptr , uint8_t TriesNumber  )
 {
 	/* Data To Send Via SPI if Number of Tries is Finished */
-	uint8_t DATA_SENT_viaSPI = RED_LED_CODE ;
+	uint8_t DATA_SENT_viaSPI[7] = { RED_LED_CODE } ;
 
 	/* Variable to Hold Return of Function Checking on ID & Inverted Pass */
 	ID_PASS_EQUALITY_t ID_PASS_Relation = ID_NOEQUAL_INVERTED_PASS ;
@@ -147,7 +150,7 @@ void Check_LoginInfo( uint8_t * ID_Ptr , uint8_t * Pass_Ptr , uint8_t TriesNumbe
 	if( TriesNumber == 0 )
 	{
 		/* Send A Signal To Light Up the Red LED ON BluePill */
-		SPI_Transmit_IT(SPI_CONFIG, &DATA_SENT_viaSPI , 1 , SPI_CallBackFunc ) ;
+		SPI_Transmit_IT(SPI_CONFIG, DATA_SENT_viaSPI , 7 , SPI_CallBackFunc ) ;
 		/* Stuck in the Call Back Function */
 
 	}
@@ -592,22 +595,28 @@ static Error_State_t Check_Calender(DS1307_Config_t * Date_Time_To_RTC)
 	return Error_State ;
 }
 
- void Transmit_Time(void)
-  {
-	 SPI_Transmit_IT(&SPI1Config, ReadingArr , 7 , SPI_CALL_BACK ) ;
- }
-
- void Reading_Time(void)
+void Transmit_Time(void)
 {
-	 /* Read Date & Time */
-	 ReadingStruct = DS1307_ReadDateTime(&I2C1_Config);
+	/* Transmit Time Via SPI */
+	SPI_Transmit_IT(SPI_CONFIG, ReadingArr , 7 , SPI_CALL_BACK ) ;
+}
 
-	 /* Convert Reading Struct into Reading Array */
-	 ReadingArr[0] = ReadingStruct->Seconds;
-	 ReadingArr[1] = ReadingStruct->Minutes;
-	 ReadingArr[2] = ReadingStruct->Hours;
-	 ReadingArr[3] = ReadingStruct->Day;
-	 ReadingArr[4] = ReadingStruct->Month;
-	 ReadingArr[5] = ReadingStruct->Year;
-	 ReadingArr[6] = ReadingStruct->Date;
+void Reading_Time(void)
+{
+	/* Read Date & Time */
+	ReadingStruct = DS1307_ReadDateTime(I2C_CONFIG);
+
+	/* Convert Reading Struct into Reading Array */
+	ReadingArr[0] = ReadingStruct->Seconds;
+	ReadingArr[1] = ReadingStruct->Minutes;
+	ReadingArr[2] = ReadingStruct->Hours;
+	ReadingArr[3] = ReadingStruct->Day;
+	ReadingArr[4] = ReadingStruct->Month;
+	ReadingArr[5] = ReadingStruct->Year;
+	ReadingArr[6] = ReadingStruct->Date;
+}
+
+void SPI_CALL_BACK( void )
+{
+
 }
