@@ -103,7 +103,14 @@ int main(void)
 			break ;
 
 		case SET_ALARM_OPTION :
+	InterruptsInit();
 
+
+	/* Set Alarm */
+	SetAlarm();
+
+	/* Configuring SYSTICK To Call CompTime Function Every One Second */
+	SYSTICK_voidSetINT(1000, 1, &SysTickPeriod
 			break ;
 		case SET_DATE_TIME_OPTION :
 			while(1)
@@ -155,6 +162,10 @@ void SPI_CallBackFunc( void )
 	/* ShutDown Sequence Excecution */
 	ShutDown_Sequence( ) ;
 }
+void SysTickPeriodicISR()
+{
+CompTime();
+}
 
 
 /************************ SOURCE REVISION LOG *********************************
@@ -170,7 +181,9 @@ void SPI_CallBackFunc( void )
  *	29/08/23   1.1.2   Mohammed Ayman    Merging is Done of 2 branches on Develop Branch.	
  *  30/08/23   1.1.2   Mohammed Wael     Solving The Conflicts and Pushing to Remote Repe. 
  *	30/08/23   1.1.3   Mohammed Ayman    Trying The Application After Merging.
- *	
+ *	 *  27/8/23    1.0.0   Mohamed Waled     Initial Release For Functions ( PeripheralInit - SetAlarm - CalcAlarm)
+ *  28/8/23    1.0.0   Mohamed Waled     Initial Release For CompTime Function
+ *  29/8/23    1.0.0   Mohamed Waled     Adding Some Documentation And Fixing Some Bugs
  *
  *
  *
