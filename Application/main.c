@@ -11,75 +11,59 @@
  *
  ******************************************************************************
  */
+/************************ SOURCE REVISION LOG *********************************
+ *    Date    Version   Author             Description
+ *  16/08/23   1.0.0   Mohamemd Ayman    Initial Release ( INCLUDES )
+ *  27/8/23    1.0.0   Mohamed Waled     Initial Release For Functions ( PeripheralInit - SetAlarm - CalcAlarm)
+ *  28/8/23    1.0.0   Mohamed Waled     Initial Release For CompTime Function
+ *  29/8/23    1.0.0   Mohamed Waled     Adding Some Documentation And Fixing Some Bugs
+ *******************************************************************************/
 
 /* ========================================================================= *
  *                            INCLUDES SECTION                               *
  * ========================================================================= */
 
 #include <stdint.h>
-
 #include "../Library/ErrTypes.h"
 #include "../Library/STM32F446xx.h"
-
-#include "../Drivers/Inc/RCC_Interface.h"
-#include "../Drivers/Inc/GPIO_Interface.h"
-#include "../Drivers/Inc/NVIC_Interface.h"
-#include "../Drivers/Inc/SCB_Interface.h"
-#include "../Drivers/Inc/DMA_Interface.h"
-#include "../Drivers/Inc/EXTI_Interface.h"
-#include "../Drivers/Inc/SYSCFG_Interface.h"
-#include "../Drivers/Inc/I2C_Interface.h"
-#include "../Drivers/Inc/SPI_Interface.h"
-#include "../Drivers/Inc/UART_Interface.h"
+#include "../Service/Inc/Service.h"
 #include "../Drivers/Inc/SYSTICK_Interface.h"
-
-#include "../HAL/Inc/DS1307_Interface.h"
-
-/* ========================================================================= *
- *                        GLOBAL VARIABLES SECTION                           *
- * ========================================================================= */
-
-
-/* ========================================================================= *
- *                         PRIVATE MACROS SECTION                            *
- * ========================================================================= */
-
-
-
-/* ========================================================================= *
- *                      FUNCTIONS PROTOTYPES SECTION                         *
- * ========================================================================= */
-
-
 
 /* ========================================================================= *
  *                        MAIN APPLICATION SECTION                           *
  * ========================================================================= */
 
-
 int main(void)
 {
 
-    /* Loop forever */
-	for(;;);
+	/* Initialize Clocks */
+	ClockInit();
+
+	InterruptsInit();
+
+	/* Initialize Pins */
+	PinInit();
+
+	/* Initialize Peripherals */
+	PeripheralInit();
+
+	/* Set Alarm */
+	SetAlarm();
+
+	/* Configuring SYSTICK To Call CompTime Function Every One Second */
+	SYSTICK_voidSetINT(1000, 1, &SysTickPeriodicISR);
+
+	/* Loop forever */
+	for (;;)
+		;
 }
 
-/* ========================================================================= *
- *                    FUNCTIONS IMPLEMENTATION SECTION                       *
- * ========================================================================= */
-
-
-
-/************************ SOURCE REVISION LOG *********************************
- *
- *    Date    Version   Author             Description
- *  16/08/23   1.0.0   Mohamemd Ayman    Initial Release ( INCLUDES )
- *
- *
- *
- *
- *
- *
- *
- *
- *******************************************************************************/
+/*==============================================================================================================================================
+ *@fn      : void SysTickPeriodicISR()
+ *@brief  :  This Function Is The ISR For The SYSTICK Interrupt
+ *@retval void :
+ *==============================================================================================================================================*/
+void SysTickPeriodicISR()
+{
+	CompTime();
+}
