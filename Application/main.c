@@ -24,7 +24,7 @@
 #include "../Drivers/Inc/NVIC_Interface.h"
 #include "../Drivers/Inc/I2C_Interface.h"
 #include "../Drivers/Inc/UART_Interface.h"
-
+#include "../Drivers/Inc/SYSTICK_Interface.h"
 #include "../HAL/Inc/DS1307_Interface.h"
 
 #include "../Service/Inc/Service.h"
@@ -103,14 +103,14 @@ int main(void)
 			break ;
 
 		case SET_ALARM_OPTION :
-	InterruptsInit();
+			InterruptsInit();
 
 
-	/* Set Alarm */
-	SetAlarm();
+			/* Set Alarm */
+			SetAlarm();
 
-	/* Configuring SYSTICK To Call CompTime Function Every One Second */
-	SYSTICK_voidSetINT(1000, 1, &SysTickPeriod
+			/* Configuring SYSTICK To Call CompTime Function Every One Second */
+			SYSTICK_voidSetINT(1000, 1, &SysTickPeriodicISR);
 			break ;
 		case SET_DATE_TIME_OPTION :
 			while(1)
@@ -164,7 +164,7 @@ void SPI_CallBackFunc( void )
 }
 void SysTickPeriodicISR()
 {
-CompTime();
+	CompTime();
 }
 
 

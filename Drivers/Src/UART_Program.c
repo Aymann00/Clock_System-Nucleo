@@ -463,37 +463,3 @@ void USART6_IRQHandler(void)
 {
 	UART_HANDLE_IT(UART_6);
 }
-}
-/*==============================================================================================================================================
- * ISR
- *==============================================================================================================================================*/
-/* UART1 ISR */
-void USART1_IRQHandler(void)
-{
-  UART_HANDLE_IT(UART_1) ;
-}
-/* UART2 ISR */
-void USART2_IRQHandler(void)
-{
-	UART_HANDLE_IT(UART_2);
-}
-/* UART3 ISR */
-void USART3_IRQHandler(void)
-{
-	UART_HANDLE_IT(UART_3);
-}
-/* UART4 ISR */
-void UART4_IRQHandler(void)
-{
-	UART_HANDLE_IT(UART_4);
-}
-/* UART5 ISR */
-void UART5_IRQHandler(void)
-{
-	UART_HANDLE_IT(UART_5);
-}
-/* UART6 ISR */
-void USART6_IRQHandler(void)
-{
-	UART_HANDLE_IT(UART_6);
-}

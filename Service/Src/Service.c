@@ -656,7 +656,7 @@ void CalcAlarm(uint8_t AlarmNumber)
 	uint8_t RecTemp[8] = {0};
 
 	/* Receive The Alarm Time From UART And Store It In The Array */
-	UART_voidRecieveBuffer(UART2_PTR, RecTemp, 8);
+	UART_voidRecieveBuffer(UART_CONFIG, RecTemp, 8);
 
 	/* Store The Received Data In The Global Array */
 	AlarmTime[AlarmNumber - 48][0] = (RecTemp[0] - 48) * 10 + (RecTemp[1] - 48);
@@ -674,7 +674,7 @@ void CompTime()
 	DS1307_Config_t *RecievedTime;
 
 	/* Reading The Current Time From The RTC */
-	RecievedTime = DS1307_ReadDateTime(I2C1_PTR);
+	RecievedTime = DS1307_ReadDateTime(I2C_CONFIG);
 
 	/* Array To Store The Current Time From The Current Time Recieved From The RTC */
 	uint8_t CurrentTime[3] = {
@@ -721,7 +721,7 @@ void CompTime()
 			/* Variable To Store The Alarm Number */
 			AlarmName[0] = ++Counter1;
 			/* Send The Alarm Number To The Blue Pill */
-			SPI_Transmit_IT(SPI1_PTR, AlarmName, 30, &SPI1_ISR);
+			SPI_Transmit_IT(SPI_CONFIG, AlarmName, 30, &SPI1_ISR);
 		}
 	}
 }
@@ -750,7 +750,7 @@ void SetAlarm()
 	USART_SendStringPolling(UART_2, "Please Choose Alarm Number From ( 1 ~ 5 )\nYour Choice: ");
 
 	/* Receive The Alarm Number From The User */
-	ChooseNum = UART_u16Receive(UART2_PTR);
+	ChooseNum = UART_u16Receive(UART_CONFIG);
 
 	/* Ask The User To Enter The Alarm Name */
 	USART_SendStringPolling(UART_2, "Please Enter Alarm Name: ");
@@ -760,7 +760,7 @@ void SetAlarm()
 	{
 
 		/* Receive The Alarm Name From The User */
-		AlarmName[AlarmNameCounter] = UART_u16Receive(UART2_PTR);
+		AlarmName[AlarmNameCounter] = UART_u16Receive(UART_CONFIG);
 		if (AlarmName[AlarmNameCounter] == 13)
 		{
 			break;

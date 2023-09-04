@@ -74,20 +74,3 @@ static void SPI_IRQ_Source_HANDLE(SPI_SPI_NUMBER_t SPI_Num);
 #define	SSI_BIT					8
 
 #endif /* SPI_INC_SPI_PRIVATE_H_ */
-typedef enum
-{
-    SPI_NO_IRQ_SRC = 0x00,
-    SPI_TRANSCEIVE_DATA_IRQ_SRC = 0x01,
-    SPI_TRANSCEIVE_BUFFER_IRQ_SRC = 0x02,
-
-} SPI_IRQ_SRC_t;
-
-typedef enum
-{
-    SPI_ROLE_TRANSMIT = 0x00,
-    SPI_ROLE_RECEIVE = 0x01,
-} SPI_ROLE_DIR_t;
-
-
-
-#endif /* USART_PRIVATE_H_ */
