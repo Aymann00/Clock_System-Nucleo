@@ -1,19 +1,19 @@
 /*******************************************************************************
-* Filename              :   Service.h
-* Author                :   Mohamemd Waleed Gad
-* Origin Date           :   Aug 29, 2023
-* Version               :   1.0.0
-* Compiler              :   GCC ARM Embedded Toolchain
-* Target                :   
-* Notes                 :   None 
-**
-*******************************************************************************/
+ * Filename              :   Service.h
+ * Author                :   Mohamemd Waleed Gad
+ * Origin Date           :   Aug 29, 2023
+ * Version               :   1.0.0
+ * Compiler              :   GCC ARM Embedded Toolchain
+ * Target                :
+ * Notes                 :   None
+ **
+ *******************************************************************************/
 /************************ SOURCE REVISION LOG *********************************
-*
-*    Date    Version   Author             Description 
-*  14/10/20   1.0.0   Mohamemd Waleed   Initial Release.
-*
-*******************************************************************************/
+ *
+ *    Date    Version   Author             Description
+ *  14/10/20   1.0.0   Mohamemd Waleed   Initial Release.
+ *
+ *******************************************************************************/
 #ifndef INC_SERVICE_H_
 #define INC_SERVICE_H_
 
@@ -71,8 +71,18 @@ void SetAlarm();
  *==============================================================================================================================================*/
 void SPI1_ISR();
 
-void InterruptsInit (void);
+/*==============================================================================================================================================
+ *@fn      : void InterruptsInit (void)
+ *@brief  :  This Function Is Responsible For Initializing The Interrupts
+ *@retval void :
+ *==============================================================================================================================================*/
+void InterruptsInit(void);
 
+/*==============================================================================================================================================
+ *@fn      : void SysTickPeriodicISR()
+ *@brief  :  This Function Is The ISR For The SYSTICK Interrupt
+ *@retval void :
+ *==============================================================================================================================================*/
 void SysTickPeriodicISR();
 /* ========================================================================= *
  *                         PRIVATE MACROS SECTION                            *
@@ -80,11 +90,13 @@ void SysTickPeriodicISR();
 
 typedef enum
 {
-Equal,
-NotEqual
-}Equality_t;
+    Equal,
+    NotEqual
+} Equality_t;
 
-#define Filling       {{0xFF ,0xFF,0xFF },{0xFF ,0xFF,0xFF },{0xFF ,0xFF,0xFF },{0xFF ,0xFF,0xFF },{0xFF ,0xFF,0xFF }}
-
+#define Filling                                                                                              \
+    {                                                                                                        \
+        {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, { 0xFF, 0xFF, 0xFF } \
+    }
 
 #endif /* INC_SERVICE_H_ */
