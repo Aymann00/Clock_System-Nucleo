@@ -32,7 +32,10 @@ typedef enum
 
 } SYSTICK_EXCEPTION_t;
 
-
+typedef enum {
+	SYSTICK_CLOCK_AHB_DIVIDEDBY8=0,
+	SYSTICK_CLOCK_AHB_DIRECT
+}SYSTICK_CLOCK_t;
 
 
 /**
@@ -92,4 +95,13 @@ ERRORS_t SYSTICK_Delayms(uint32_t Copy_u32TimeInMillis) ;
  **/
 ERRORS_t SYSTICK_Delayus(uint32_t Copy_u32TimeInMicroSeconds) ;
 
+/***********************************
+ * @function 		:	SYSTICK_voidSetINT
+ * @brief			:	Set periodic interrupt every Specific time
+ * @parameter[in]	:	the Desired interrupt Time in MS
+ * @parameter[in]	:	The Call back function
+ * @retval			:	Error State
+ */
+
+void	SYSTICK_voidSetINT	(uint32_t	Time_ms , SYSTICK_CLOCK_t Systick_CLK_SRC , void (* SYSTK_pfCallBackFunc )(void));
 #endif /* SYSTICK_INTERFACE_H_ */
