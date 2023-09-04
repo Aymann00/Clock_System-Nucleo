@@ -41,6 +41,16 @@ typedef enum
     DEBUGMONITOR_HANDLER,
     PENDSV_HANDLER
 } HANDLER_t;
+
+typedef enum
+{
+MemoryManagment_FAULT =4   ,
+BusFault_FAULT=12,
+Usage_FAULT=20,
+SVCCALL_FAULT=28,
+PENDSV_FAULT=20  ,
+SYSTICK_FAULT=28,
+}SystemFault_t;
 /*==============================================================================================================================================
  *@fn SCB_VoidSetPriorityGroup
  *@brief Setting Priority Group
@@ -62,4 +72,11 @@ void SCB_VoidEnableFaultException(Fault_t Local_Fault);
  *@retval void
  *==============================================================================================================================================*/
 void SCB_VoidDisableFaultException(Fault_t Local_Fault);
+/*==============================================================================================================================================
+ *@fn SCB_VoidSetCorePriority
+ *@brief This function used to Set priority for Core peripheral
+ *@paramter[in] Local_Fault: Fault Type
+ *@retval void
+ *==============================================================================================================================================*/
+void SCB_VoidSetCorePriority (SystemFault_t SystemFault , uint8_t  Copy_u8Priority);
 #endif /* SCB_INCLUDE_SCB_INTERFACE_H_ */
