@@ -172,7 +172,7 @@ void UART_voidTransmitData(UART_Config_t *UART_Config, uint16_t Copy_u16Data)
  *@paramter[in]  : void
  *@retval u16
  *==============================================================================================================================================*/
-uint16_t UART_u16Receive(UART_Config_t *UART_Config)
+uint8_t UART_u16Receive(UART_Config_t *UART_Config)
 {
 
 	/* Wait for data to be transfered from other device*/
@@ -203,7 +203,7 @@ void UART_u16ReceiveIT(UART_Config_t *UART_Config, void (*pv_CallBackFunc)(void)
  *@paramter[in] UART_Config_t *UART_Config : Pointer to the UART peripheral configuration structure
  *@retval void
  *==============================================================================================================================================*/
-void UART_voidRecieveBuffer(UART_Config_t *UART_Config, uint16_t *Copy_p8Buffer, uint16_t Copy_u8BufferSize)
+void UART_voidRecieveBuffer(UART_Config_t *UART_Config, uint8_t *Copy_p8Buffer, uint16_t Copy_u8BufferSize)
 {
 
 	/* Local Variable to hold the counter */
@@ -295,6 +295,42 @@ void UART_voidRecieveBufferIT(UART_Config_t *UART_Config, uint16_t *Copy_p8Buffe
  *==============================================================================================================================================*/
 void UART_voidTransmitBufferIT(UART_Config_t *UART_Config, uint16_t *Copy_p8Buffer, uint16_t Copy_u8BufferSize);
 
+/*
+
+@function         :    USART_SendStringPolling
+@brief            :    Send String using USART
+@param            :    String
+@retval            :    Error State
+ */
+Error_State_t USART_SendStringPolling(uint8_t USART_Num , const char* String)
+{
+	Error_State_t Error_State = OK;
+	uint16_t Counter=0;
+	if (NULL != String)
+	{
+		while (String[Counter] != '\0')
+		{
+			if ((USART_Num >= 0) && (USART_Num <= 5))
+			{
+				/*wait till DR is Empty*/
+				while (!(GET_BIT(UART[USART_Num]->SR,TXE_Flage)));
+				/*Store data in the DR Register*/
+				UART[USART_Num]->DR = String[Counter];
+				/*wait till Transmission is complete*/
+				while (!(GET_BIT(UART[USART_Num]->SR,TC_Flage)));
+			}
+			else {
+				Error_State = USART_WRONG_NUMBER;
+				break;
+			}
+			Counter++;
+		}
+	}
+	else {
+		Error_State = Null_Pointer;
+	}
+	return Error_State ;
+}
 
 /*==============================================================================================================================================
  *@fn    UART_HANDLE_IT
@@ -306,92 +342,92 @@ void UART_voidTransmitBufferIT(UART_Config_t *UART_Config, uint16_t *Copy_p8Buff
 static void UART_HANDLE_IT( UART_ID_t UARTNumber )
 {
 	/* Comming from UART_ReciveBufferIT*/
-		if ((UART_ReadFlag(UARTNumber, RXNE_Flage) == 1) && UART_RecieveBufferFlag[UARTNumber] == 1)
+	if ((UART_ReadFlag(UARTNumber, RXNE_Flage) == 1) && UART_RecieveBufferFlag[UARTNumber] == 1)
+	{
+		static uint8_t FlagCounter = 0;
+
+		/* Reading Data */
+		UART_RecievedBufferIT[UARTNumber][FlagCounter++] = UART[UARTNumber]->DR;
+
+		if (FlagCounter == UART_RecieveBufferSize[UARTNumber])
 		{
-			static uint8_t FlagCounter = 0;
-
-			/* Reading Data */
-			UART_RecievedBufferIT[UARTNumber][FlagCounter++] = UART[UARTNumber]->DR;
-
-			if (FlagCounter == UART_RecieveBufferSize[UARTNumber])
-			{
-				/* Disabling Read Data Register Not Empty Interrupt */
-				UART_RecieveBufferFlag[UARTNumber] = 0;
-
-				UART[UARTNumber]->CR1 &= ~(1 << USART_RXNEIE);
-
-				/* Calling the CallBack Function */
-				UART_PTR_TO_FUNC[UARTNumber][RXNE_Flage]();
-			}
-		}
-
-		/* Comming From UART_RecieBuffer*/
-		if ((UART_ReadFlag(UARTNumber, RXNE_Flage) == 1))
-		{
-			*UART_RecievedBuffer[UARTNumber] = UART[UARTNumber]->DR;
+			/* Disabling Read Data Register Not Empty Interrupt */
+			UART_RecieveBufferFlag[UARTNumber] = 0;
 
 			UART[UARTNumber]->CR1 &= ~(1 << USART_RXNEIE);
 
 			/* Calling the CallBack Function */
-			UART_PTR_TO_FUNC[UARTNumber][RXN]();
+			UART_PTR_TO_FUNC[UARTNumber][RXNE_Flage]();
 		}
-		/* Transmission Complete */
-		if (UART_ReadFlag(UARTNumber, TC_Flage) == 1)
-		{
-			/* Clearing the TC Flag */
-			UART[UARTNumber]->SR &= ~(1 << TC_Flage);
+	}
 
-			/* Calling the CallBack Function */
-			UART_PTR_TO_FUNC[UARTNumber][TC_Flage]();
-		}
-		/* Transmit Data Register Empty */
-		if (UART_ReadFlag(UARTNumber, TXE_Flage) == 1)
-		{
-			/* Clearing the TXE Flag */
-			UART[UARTNumber]->SR &= ~(1 << TXE_Flage);
+	/* Comming From UART_RecieBuffer*/
+	if ((UART_ReadFlag(UARTNumber, RXNE_Flage) == 1))
+	{
+		*UART_RecievedBuffer[UARTNumber] = UART[UARTNumber]->DR;
 
-			/* Calling the CallBack Function */
-			UART_PTR_TO_FUNC[UARTNumber][TXE_Flage]();
-		}
+		UART[UARTNumber]->CR1 &= ~(1 << USART_RXNEIE);
 
-		/* Overrun Error */
-		if (UART_ReadFlag(UARTNumber, ORE_Flage) == 1)
-		{
-			/* Clearing the ORE Flag */
-			UART[UARTNumber]->SR &= ~(1 << ORE_Flage);
+		/* Calling the CallBack Function */
+		UART_PTR_TO_FUNC[UARTNumber][RXN]();
+	}
+	/* Transmission Complete */
+	if (UART_ReadFlag(UARTNumber, TC_Flage) == 1)
+	{
+		/* Clearing the TC Flag */
+		UART[UARTNumber]->SR &= ~(1 << TC_Flage);
 
-			/* Calling the CallBack Function */
-			UART_PTR_TO_FUNC[UARTNumber][ORE_Flage]();
-		}
+		/* Calling the CallBack Function */
+		UART_PTR_TO_FUNC[UARTNumber][TC_Flage]();
+	}
+	/* Transmit Data Register Empty */
+	if (UART_ReadFlag(UARTNumber, TXE_Flage) == 1)
+	{
+		/* Clearing the TXE Flag */
+		UART[UARTNumber]->SR &= ~(1 << TXE_Flage);
 
-		/* Framing Error */
-		if (UART_ReadFlag(UARTNumber, FE_Flage) == 1)
-		{
-			/* Clearing the FE Flag */
-			UART[UARTNumber]->SR &= ~(1 << FE_Flage);
+		/* Calling the CallBack Function */
+		UART_PTR_TO_FUNC[UARTNumber][TXE_Flage]();
+	}
 
-			/* Calling the CallBack Function */
-			UART_PTR_TO_FUNC[UARTNumber][FE_Flage]();
-		}
-		/* Noise Error */
-		if (UART_ReadFlag(UARTNumber, NF_Flage) == 1)
-		{
-			/* Clearing the NE Flag */
-			UART[UARTNumber]->SR &= ~(1 << NF_Flage);
+	/* Overrun Error */
+	if (UART_ReadFlag(UARTNumber, ORE_Flage) == 1)
+	{
+		/* Clearing the ORE Flag */
+		UART[UARTNumber]->SR &= ~(1 << ORE_Flage);
 
-			/* Calling the CallBack Function */
-			UART_PTR_TO_FUNC[UARTNumber][NF_Flage]();
-		}
+		/* Calling the CallBack Function */
+		UART_PTR_TO_FUNC[UARTNumber][ORE_Flage]();
+	}
 
-		/* Parity Error */
-		if (UART_ReadFlag(UARTNumber, PE_Flage) == 1)
-		{
-			/* Clearing the PE Flag */
-			UART[UARTNumber]->SR &= ~(1 << PE_Flage);
+	/* Framing Error */
+	if (UART_ReadFlag(UARTNumber, FE_Flage) == 1)
+	{
+		/* Clearing the FE Flag */
+		UART[UARTNumber]->SR &= ~(1 << FE_Flage);
 
-			/* Calling the CallBack Function */
-			UART_PTR_TO_FUNC[UARTNumber][PE_Flage]();
-		}
+		/* Calling the CallBack Function */
+		UART_PTR_TO_FUNC[UARTNumber][FE_Flage]();
+	}
+	/* Noise Error */
+	if (UART_ReadFlag(UARTNumber, NF_Flage) == 1)
+	{
+		/* Clearing the NE Flag */
+		UART[UARTNumber]->SR &= ~(1 << NF_Flage);
+
+		/* Calling the CallBack Function */
+		UART_PTR_TO_FUNC[UARTNumber][NF_Flage]();
+	}
+
+	/* Parity Error */
+	if (UART_ReadFlag(UARTNumber, PE_Flage) == 1)
+	{
+		/* Clearing the PE Flag */
+		UART[UARTNumber]->SR &= ~(1 << PE_Flage);
+
+		/* Calling the CallBack Function */
+		UART_PTR_TO_FUNC[UARTNumber][PE_Flage]();
+	}
 }
 /*==============================================================================================================================================
  * ISR
@@ -399,7 +435,7 @@ static void UART_HANDLE_IT( UART_ID_t UARTNumber )
 /* UART1 ISR */
 void USART1_IRQHandler(void)
 {
-  UART_HANDLE_IT(UART_1) ;
+	UART_HANDLE_IT(UART_1) ;
 }
 /* UART2 ISR */
 void USART2_IRQHandler(void)
