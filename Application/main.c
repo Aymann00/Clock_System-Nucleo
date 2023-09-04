@@ -103,14 +103,13 @@ int main(void)
 			break ;
 
 		case SET_ALARM_OPTION :
-			InterruptsInit();
-
 
 			/* Set Alarm */
 			SetAlarm();
 
 			/* Configuring SYSTICK To Call CompTime Function Every One Second */
 			SYSTICK_voidSetINT(1000, 1, &SysTickPeriodicISR);
+
 			break ;
 		case SET_DATE_TIME_OPTION :
 			while(1)
@@ -170,21 +169,20 @@ void SysTickPeriodicISR()
 
 /************************ SOURCE REVISION LOG *********************************
  *
- *    Date    Version   Author             Description
- *  25/08/23   1.0.0   Mohamemd Ayman    Initial Release ( INCLUDES ).
- *  27/08/23   1.0.1   Mohammed Ayman    Program Basic Functionality.
- *  27/08/23   1.0.0   Mohammed Wael     Implement Function For Reading From USART.
- *	28/08/23   1.1.0   Mohammed Ayman    Art Changes to Make Project More Prettier.
- *  28/08/23   1.1.0   Mohammed Wael     Implement Function to Calculate the Calender Given From User via USART.
- *  28/08/23   1.1.1   Mohammed Ayman    Adding A Service Layer & Well Documenting the Application Layer.
- *	29/08/23   1.1.1   Mohammed Wael     Implement Function to Check the Calender Given From User via USART and Send it to RTC.
- *	29/08/23   1.1.2   Mohammed Ayman    Merging is Done of 2 branches on Develop Branch.	
- *  30/08/23   1.1.2   Mohammed Wael     Solving The Conflicts and Pushing to Remote Repe. 
- *	30/08/23   1.1.3   Mohammed Ayman    Trying The Application After Merging.
- *	 *  27/8/23    1.0.0   Mohamed Waled     Initial Release For Functions ( PeripheralInit - SetAlarm - CalcAlarm)
- *  28/8/23    1.0.0   Mohamed Waled     Initial Release For CompTime Function
- *  29/8/23    1.0.0   Mohamed Waled     Adding Some Documentation And Fixing Some Bugs
- *
+ *    Date      Author             Description
+ *  25/08/23   Mohamemd Ayman    Initial Release ( INCLUDES ).
+ *  27/08/23   Mohammed Ayman    Program Basic Functionality.
+ *  27/08/23   Mohammed Wael     Implement Function For Reading From USART.
+ *  27/08/23   Mohammed Waled    Initial Release For Functions ( PeripheralInit - SetAlarm - CalcAlarm)
+ *	28/08/23   Mohammed Ayman    Art Changes to Make Project More Prettier.
+ *  28/08/23   Mohammed Wael     Implement Function to Calculate the Calender Given From User via USART.
+ *  28/08/23   Mohammed Ayman    Adding A Service Layer & Well Documenting the Application Layer.
+ *  28/08/23   Mohammed Waled    Initial Release For CompTime Function
+ *  29/08/23   Mohammed Wael     Implement Function to Check the Calender Given From User via USART and Send it to RTC.
+ *	29/08/23   Mohammed Ayman    Merging is Done of 2 branches on Develop Branch.
+ *	29/08/23   Mohammed Waled    Adding Some Documentation And Fixing Some Bugs
+ *  30/08/23   Mohammed Wael     Solving The Conflicts and Pushing to Remote Repe.
+ *	30/08/23   Mohammed Ayman    Trying The Application After Merging.
  *
  *
  *******************************************************************************/

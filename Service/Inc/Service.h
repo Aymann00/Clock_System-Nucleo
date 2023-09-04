@@ -30,10 +30,10 @@
 #define CLEAR_TERMINAL    "\033\143"
 
 #define DELAY_1s()          for (uint16_t n = 1000 ; n > 0 ; n-- )\
-		                    for (uint16_t y = 0 ; y < 3195 ; y++ )
+		for (uint16_t y = 0 ; y < 3195 ; y++ )
 
 #define DELAY_500ms()    for (uint16_t n = 500 ; n > 0 ; n-- )\
-						 for (uint16_t i = 0 ; i < 3195 ; i++ )
+		for (uint16_t i = 0 ; i < 3195 ; i++ )
 
 #define ZERO_ASCII      48
 
@@ -50,11 +50,10 @@
 #define MAX_MONTH				12u
 #define MAX_YEAR				99u
 
+#define ALARMCODE               100
 
-#define Filling                                                                                              \
-    {                                                                                                        \
-        {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, { 0xFF, 0xFF, 0xFF } \
-    }
+#define Filling                 {{0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, { 0xFF, 0xFF, 0xFF }}
+
 /* ========================================================================= *
  *                         PRIVATE ENUMS SECTION                             *
  * ========================================================================= */
@@ -76,8 +75,8 @@ typedef enum
 
 typedef enum
 {
-    Equal,
-    NotEqual
+	Equal,
+	NotEqual
 } Equality_t;
 /* ========================================================================= *
  *                      FUNCTIONS PROTOTYPES SECTION                         *
@@ -114,6 +113,11 @@ void Check_LoginInfo( uint8_t * ID_Ptr , uint8_t * Pass_Ptr , uint8_t TriesNumbe
 
 Error_State_t ReadDateTime_FromPC(void) ;
 
+/*==============================================================================================================================================
+ *@fn      : void InterruptsInit (void)
+ *@brief  :  This Function Is Responsible For Initializing The Interrupts
+ *@retval void :
+ *==============================================================================================================================================*/
 void Interrupts_Init( void ) ;
 
 static DS1307_DAYS_t FindDay(uint8_t * Calender);
@@ -148,12 +152,7 @@ void SetAlarm();
  *==============================================================================================================================================*/
 void SPI1_ISR();
 
-/*==============================================================================================================================================
- *@fn      : void InterruptsInit (void)
- *@brief  :  This Function Is Responsible For Initializing The Interrupts
- *@retval void :
- *==============================================================================================================================================*/
-void InterruptsInit(void);
+
 
 /*==============================================================================================================================================
  *@fn      : void SysTickPeriodicISR()

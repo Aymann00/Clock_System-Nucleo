@@ -457,6 +457,16 @@ void USART2_Init ( void )
 void Interrupts_Init( void )
 {
 	NVIC_EnableIRQ( SPI1_IRQ ) ;
+
+	/* Set 2 Group Priorities & 8 Sub Priorities*/
+		SCB_VoidSetPriorityGroup(GP_2_SP_8);
+
+		/* Set SPI to Group Priority Zero*/
+		NVIC_SetPriority(SPI1_IRQ, 0);
+
+		/* Set SYSTICK to Group Priority One*/
+		SCB_VoidSetCorePriority(SYSTICK_FAULT, (1 << 7));
+
 }
 
 void SPI1_Init( void )
@@ -718,8 +728,9 @@ void CompTime()
 		/* If The Current Time Is Equal To The Alarm Time Send The Alarm Number To The Blue Pill */
 		if (EqualityCheck == Equal)
 		{
+			AlarmName[0] = ALARMCODE ;
 			/* Variable To Store The Alarm Number */
-			AlarmName[0] = ++Counter1;
+			AlarmName[1] = ++Counter1;
 			/* Send The Alarm Number To The Blue Pill */
 			SPI_Transmit_IT(SPI_CONFIG, AlarmName, 30, &SPI1_ISR);
 		}
@@ -756,7 +767,7 @@ void SetAlarm()
 	USART_SendStringPolling(UART_2, "Please Enter Alarm Name: ");
 
 	/* Loop To Receive The Alarm Name From The User Until The User Press Enter */
-	for (AlarmNameCounter = 1; AlarmNameCounter < 30; AlarmNameCounter++)
+	for (AlarmNameCounter = 2; AlarmNameCounter < 30; AlarmNameCounter++)
 	{
 
 		/* Receive The Alarm Name From The User */
@@ -783,26 +794,5 @@ void SetAlarm()
 	}
 }
 
-/*==============================================================================================================================================
- *@fn      : void PeripheralInit()
- *@brief  :  This Function Is Responsible For Initializing The Peripherals
- *@retval void :
- *==============================================================================================================================================*/
 
-/*==============================================================================================================================================
- *@fn      : void InterruptsInit (void)
- *@brief  :  This Function Is Responsible For Initializing The Interrupts
- *@retval void :
- *==============================================================================================================================================*/
-void InterruptsInit(void)
-{
 
-	/* Set 2 Group Priorities & 8 Sub Priorities*/
-	SCB_VoidSetPriorityGroup(GP_2_SP_8);
-
-	/* Set SPI to Group Priority Zero*/
-	NVIC_SetPriority(SPI1_IRQ, 0);
-
-	/* Set SYSTICK to Group Priority One*/
-	SCB_VoidSetCorePriority(SYSTICK_FAULT, (1 << 7));
-}
