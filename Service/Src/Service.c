@@ -42,7 +42,7 @@
  *                        GLOBAL VARIABLES SECTION                           *
  * ========================================================================= */
 
-uint8_t ReadingArr[7]={ 0 } ;
+uint8_t ReadingArr[30]={ 0 } ;
 
 UART_Config_t * UART_CONFIG ;
 
@@ -115,7 +115,7 @@ void Check_IF_ContinueisNeeded( void )
 void Check_LoginInfo( uint8_t * ID_Ptr , uint8_t * Pass_Ptr , uint8_t TriesNumber  )
 {
 	/* Data To Send Via SPI if Number of Tries is Finished */
-	uint8_t DATA_SENT_viaSPI[7] = { RED_LED_CODE } ;
+	uint8_t DATA_SENT_viaSPI[30] = { RED_LED_CODE } ;
 
 	/* Variable to Hold Return of Function Checking on ID & Inverted Pass */
 	ID_PASS_EQUALITY_t ID_PASS_Relation = ID_NOEQUAL_INVERTED_PASS ;
@@ -160,7 +160,7 @@ void Check_LoginInfo( uint8_t * ID_Ptr , uint8_t * Pass_Ptr , uint8_t TriesNumbe
 	if( TriesNumber == 0 )
 	{
 		/* Send A Signal To Light Up the Red LED ON BluePill */
-		SPI_Transmit_IT(SPI_CONFIG, DATA_SENT_viaSPI , 7 , SPI_CallBackFunc ) ;
+		SPI_Transmit_IT(SPI_CONFIG, DATA_SENT_viaSPI , 30 , SPI_CallBackFunc ) ;
 		/* Stuck in the Call Back Function */
 
 	}
@@ -421,13 +421,14 @@ void Pins_Init( void )
 			.PinNum = PIN6,
 			.Mode = OUTPUT,
 			.OutputType = PUSH_PULL,
-			.PullType = PULL_UP,
+			.PullType = PULL_DOWN,
+
 		};
 
 	/* Initialize Pin PB6 For EXTI */
 	GPIO_u8PinInit(&PB6_EXTI);
 
-	GPIO_u8SetPinValue(PORTB, PIN6, PIN_HIGH);
+
 }
 
 void USART2_Init ( void )
@@ -513,6 +514,8 @@ void ShutDown_Sequence( void )
 	/* This Funciton is Called When Number of Tries of User is Finished & RED_LED_CODE is Transmitted to the
 	 * Blue Pill Board
 	 */
+	Clear_Terminal( ) ;
+
 	USART_SendStringPolling( UART_CONFIG->UART_ID , (char*)"┌──────────── •✧✧• ────────────┐\n") ;
 	USART_SendStringPolling( UART_CONFIG->UART_ID , (char*)"-     System Shut Down         - \n") ;
 	USART_SendStringPolling( UART_CONFIG->UART_ID , (char*)"└──────────── •✧✧• ────────────┘\n") ;
@@ -632,7 +635,7 @@ static Error_State_t Check_Calender(DS1307_Config_t * Date_Time_To_RTC)
 void Transmit_Time(void)
 {
 	/* Transmit Time Via SPI */
-	SPI_Transmit_IT(SPI_CONFIG, ReadingArr , 7 , SPI_CALL_BACK ) ;
+	SPI_Transmit_IT(SPI_CONFIG, ReadingArr , 30 , SPI_CALL_BACK ) ;
 }
 
 void Reading_Time(void)
@@ -641,13 +644,15 @@ void Reading_Time(void)
 	ReadingStruct = DS1307_ReadDateTime(I2C_CONFIG);
 
 	/* Convert Reading Struct into Reading Array */
-	ReadingArr[0] = ReadingStruct->Seconds;
-	ReadingArr[1] = ReadingStruct->Minutes;
-	ReadingArr[2] = ReadingStruct->Hours;
-	ReadingArr[3] = ReadingStruct->Day;
-	ReadingArr[4] = ReadingStruct->Month;
-	ReadingArr[5] = ReadingStruct->Year;
-	ReadingArr[6] = ReadingStruct->Date;
+
+	ReadingArr[0] =  DISPLAY_CODE ;
+	ReadingArr[1] =  ReadingStruct->Seconds;
+	ReadingArr[2] =  ReadingStruct->Minutes;
+	ReadingArr[3] =  ReadingStruct->Hours;
+	ReadingArr[4] =  ReadingStruct->Day;
+	ReadingArr[5] =  ReadingStruct->Month;
+	ReadingArr[6] =  ReadingStruct->Year;
+	ReadingArr[7] =  ReadingStruct->Date;
 }
 
 void SPI_CALL_BACK( void )
@@ -665,8 +670,15 @@ void CalcAlarm(uint8_t AlarmNumber)
 	/* Variable To Store The Received Data From UART */
 	uint8_t RecTemp[8] = {0};
 
+	uint8_t LoopCounter = 0 ;
+
 	/* Receive The Alarm Time From UART And Store It In The Array */
-	UART_voidRecieveBuffer(UART_CONFIG, RecTemp, 8);
+	for(  LoopCounter = 0 ; LoopCounter <  8 ; LoopCounter++ )
+	{
+		RecTemp[ LoopCounter ] = UART_u16Receive(UART_CONFIG) ;
+
+		UART_voidTransmitData(UART_CONFIG, RecTemp[ LoopCounter ] ) ;
+	}
 
 	/* Store The Received Data In The Global Array */
 	AlarmTime[AlarmNumber - 48][0] = (RecTemp[0] - 48) * 10 + (RecTemp[1] - 48);
@@ -745,7 +757,10 @@ void SPI1_ISR()
 {
 
 	/* Notify The Blue Pill That The Alarm Is Fired */
+	GPIO_u8SetPinValue(PORTB, PIN6, PIN_HIGH);
+	DELAY_500ms( ) ;
 	GPIO_u8SetPinValue(PORTB, PIN6, PIN_LOW);
+
 }
 /*==============================================================================================================================================
  *@fn      : void SetAlarm()
@@ -757,11 +772,18 @@ void SetAlarm()
 	/* Variable To Store The Alarm Number */
 	uint8_t ChooseNum = 0;
 
+	SendNew_Line( ) ;
+
 	/* Ask The User To Choose The Alarm Number */
 	USART_SendStringPolling(UART_2, "Please Choose Alarm Number From ( 1 ~ 5 )\nYour Choice: ");
 
 	/* Receive The Alarm Number From The User */
 	ChooseNum = UART_u16Receive(UART_CONFIG);
+
+	/* To Print on Terminal What User Typed */
+	UART_voidTransmitData(UART_CONFIG, ChooseNum ) ;
+
+	SendNew_Line( ) ;
 
 	/* Ask The User To Enter The Alarm Name */
 	USART_SendStringPolling(UART_2, "Please Enter Alarm Name: ");
@@ -776,7 +798,10 @@ void SetAlarm()
 		{
 			break;
 		}
+		UART_voidTransmitData(UART_CONFIG, AlarmName[AlarmNameCounter]) ;
 	}
+
+	SendNew_Line( ) ;
 
 	/* Check If The Alarm Number Is In The Range */
 	if (ChooseNum > '0' && ChooseNum < '6')

@@ -498,6 +498,8 @@ static void SPI_IRQ_Source_HANDLE(SPI_SPI_NUMBER_t SPI_Num)
 
 			/*Call The call Back Function*/
 			SPI_pf_CallBackFuncs[SPI_Num][SPI_FLAGS_TXE]();
+
+			Counter = 1 ;
 		}
 
 		/*Buffer isn't completely sent*/
@@ -523,6 +525,8 @@ static void SPI_IRQ_Source_HANDLE(SPI_SPI_NUMBER_t SPI_Num)
 
 			/*Call The call Back Function*/
 			SPI_pf_CallBackFuncs[SPI_Num][SPI_FLAGS_RXNE]();
+
+			Counter = 0 ;
 
 		}
 		else

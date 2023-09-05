@@ -38,6 +38,7 @@
 #define ZERO_ASCII      48
 
 #define RED_LED_CODE   0x39
+#define DISPLAY_CODE   0x41
 #define FIRST_LETTER_OF_DAY		10u
 #define SECOND_LETTER_OF_DAY	11u
 #define THIRD_LETTER_OF_DAY		12u
@@ -51,6 +52,7 @@
 #define MAX_YEAR				99u
 
 #define ALARMCODE               100
+
 
 #define Filling                 {{0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, { 0xFF, 0xFF, 0xFF }}
 
