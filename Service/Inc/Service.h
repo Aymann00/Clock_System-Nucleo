@@ -194,8 +194,20 @@ static Error_State_t Check_Calender(DS1307_Config_t * Date_Time_To_RTC);
 
 void ShutDown_Sequence( void ) ;
 
+/*=======================================================================================
+ * @fn		 		:	Reading_Time
+ * @brief			:	Reading data from RTC and store data in Reading Array
+ * @param			:	void
+ * @retval			:	void
+ * ======================================================================================*/
 void Reading_Time(void);
 
+/*=======================================================================================
+ * @fn		 		:	Transmit_Time
+ * @brief			:	Transmit Buffer of data via SPI (with interrupt)
+ * @param			:	void
+ * @retval			:	void
+ * ======================================================================================*/
 void Transmit_Time(void);
 
 void SPI_CALL_BACK(void);
