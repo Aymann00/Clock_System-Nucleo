@@ -15,6 +15,8 @@
  *  27/08/23   Mohammed Waled    Initial Release For Functions ( PeripheralInit - SetAlarm - CalcAlarm)
  *	28/08/23   Mohammed Ayman    Art Changes to Make Project More Prettier.
  *  28/08/23   Mohammed Wael     Implement Function to Calculate the Calender Given From User via USART.
+ *  28/08/23   Ibrahim Mohammed  Implement Function to Reading data from RTC.
+ *  28/08/23   Ibrahim Mohammed  Implement Function to Transmit data via SPI.
  *  28/08/23   Mohammed Ayman    Adding A Service Layer & Well Documenting the Application Layer.
  *  28/08/23   Mohammed Waled    Initial Release For CompTime Function
  *  29/08/23   Mohammed Wael     Implement Function to Check the Calender Given From User via USART and Send it to RTC.
@@ -52,6 +54,7 @@ extern DS1307_Config_t Date_Time_RTC ;
 /*I2C Configurations Pointer*/
 extern I2C_Configs_t * I2C_CONFIG	;
 
+/*Array for store Reading data*/
 extern uint8_t ReadingArr[ ] ;
 
 /* ========================================================================= *
@@ -119,6 +122,7 @@ int main(void)
 			/* Read Date & Time */
 			Reading_Time();
 
+			/* Transmit Date & Time  */
 			Transmit_Time();
 			break ;
 
