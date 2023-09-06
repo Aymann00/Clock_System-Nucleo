@@ -1,87 +1,31 @@
 /*
  ******************************************************************************
  * @file           : Service.h
- * @Author         : Mohammed Ayman Shalaby
- * @brief          : Main program body
+ * @Author         : MOHAMMEDs & HEMA
+ * @brief          : Service Header File
  * @Date           : Aug 30, 2023
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2023 Ayman.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
  ******************************************************************************
  */
 #ifndef INC_SERVICE_H_
 #define INC_SERVICE_H_
 
 /* ========================================================================= *
- *                         PRIVATE MACROS SECTION                            *
+ *                            MACROS SECTION                                 *
  * ========================================================================= */
 
-#define WRONG_DAY				8u
-#define FIRST_TIME				1u
-#define NOT_FIRST_TIME			0u
-#define CALENDER_FORMAT			23u
-#define CLEAR_TERMINAL    		"\033\143"
+#define ZERO_ASCII 48
 
-#define DELAY_1s()          	for (uint16_t n = 1000 ; n > 0 ; n-- )\
-								for (uint16_t y = 0 ; y < 3195 ; y++ )
-
-#define DELAY_500ms()    		for (uint16_t n = 500 ; n > 0 ; n-- )\
-								for (uint16_t i = 0 ; i < 3195 ; i++ )
-
-#define ZERO_ASCII      		48
-
-#define RED_LED_CODE  			0x39
-#define DISPLAY_CODE   			0x41
-#define ALARMCODE               100
-
-#define FIRST_LETTER_OF_DAY		10u
-#define SECOND_LETTER_OF_DAY	11u
-#define THIRD_LETTER_OF_DAY		12u
-
-
-#define MAX_DATE				31u
-#define MAX_HOURS				23u
-#define MAX_MINUTES				59u
-#define MAX_SECONDS				59u
-#define MAX_MONTH				12u
-#define MAX_YEAR				99u
-
-
-
-
-#define Filling                 {{0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, { 0xFF, 0xFF, 0xFF }}
-
-/* ========================================================================= *
- *                         PRIVATE ENUMS SECTION                             *
- * ========================================================================= */
+#define NUM_OF_TRIES 0x03
 
 typedef enum
 {
-	NUM_OF_USART_PINS = 0x02 , NUM_OF_SPI_PINS = 0x03 , NUM_OF_ID_PASS_DIGITS = 0x04 ,
-	NUM_OF_TRIES = 0x03	,	NUM_OF_I2C_PINS = 0x02
-} MAGIG_NUMBERS_t ;
-typedef enum
-{
-	ID_EQUAL_INVERTED_PASS = 0x00 , ID_NOEQUAL_INVERTED_PASS = 0x01
-} ID_PASS_EQUALITY_t;
-typedef enum
-{
-	NO_OPTION = 0x00 , DISPLAY_OPTION = ( 0x01 + ZERO_ASCII ) , SET_ALARM_OPTION = ( 0x02 + ZERO_ASCII ) , SET_DATE_TIME_OPTION = ( 0x03 + ZERO_ASCII ) ,
+	NO_OPTION = 0x00,
+	DISPLAY_OPTION = (0x01 + ZERO_ASCII),
+	SET_ALARM_OPTION = (0x02 + ZERO_ASCII),
+	SET_DATE_TIME_OPTION = (0x03 + ZERO_ASCII),
 
-} OPTIONS_t ;
+} OPTIONS_t;
 
-typedef enum
-{
-	Equal,
-	NotEqual
-} Equality_t;
 /* ========================================================================= *
  *                      FUNCTIONS PROTOTYPES SECTION                         *
  * ========================================================================= */
@@ -92,7 +36,7 @@ typedef enum
  * @param			:	void
  * @retval			:	void
  * ======================================================================================*/
-void Clock_Init( void ) ;
+void Clock_Init(void);
 
 /*=======================================================================================
  * @fn		 		:	Pins_Init
@@ -100,8 +44,7 @@ void Clock_Init( void ) ;
  * @param			:	void
  * @retval			:	void
  * ======================================================================================*/
-void Pins_Init( void ) ;
-
+void Pins_Init(void);
 
 /*=======================================================================================
  * @fn		 		:	USART2_Init
@@ -109,7 +52,7 @@ void Pins_Init( void ) ;
  * @param			:	void
  * @retval			:	void
  * ======================================================================================*/
-void USART2_Init ( void ) ;
+void USART2_Init(void);
 
 /*=======================================================================================
  * @fn		 		:	SPI1_Init
@@ -117,35 +60,106 @@ void USART2_Init ( void ) ;
  * @param			:	void
  * @retval			:	void
  * ======================================================================================*/
-void SPI1_Init( void ) ;
+void SPI1_Init(void);
 
 /*=======================================================================================
  * @fn		 		:	I2C1_Init
  * @brief			:	Initialize I2C1
  * @param			:	void
  * @retval			:	void
- * ======================================================================================*/	
-void I2C1_Init( void );
+ * ======================================================================================*/
+void I2C1_Init(void);
 
-uint8_t * ID_Reception( void ) ;
+/** ============================================================================
+ * @fn 				: ID_Reception
+ *
+ * @brief 			: This Function is Used to Receive ID From User Digit By Digit
+ *
+ * @param[in]		: void
+ *
+ * @return 			: uint8_t *ID_Ptr > Pointer to ID Array
+ *
+ * ============================================================================
+ */
+uint8_t *ID_Reception(void);
 
-uint8_t * Pass_Reception( void ) ;
+/** ============================================================================
+ * @fn 				: Pass_Reception
+ *
+ * @brief 			: This Function is Used to Receive Password From User Digit By Digit
+ *
+ * @param[in]		: void
+ *
+ * @return 			: uint8_t *Pass_Ptr > Pointer to Password Array
+ *
+ * ============================================================================
+ */
+uint8_t *Pass_Reception(void);
 
-uint8_t * InvertPass( uint8_t * Arr , uint8_t ArrSize ) ;
+/** ============================================================================
+ * @fn 				: Clear_Terminal
+ *
+ * @brief 			: This Function is Used to Clear Putty Terminal
 
-ID_PASS_EQUALITY_t ID_Equal_InvertedPass( uint8_t * ID , uint8_t * Pass , uint8_t Size ) ;
+ * @param[in]		: void
+ *
+ * @return 			: void
+ *
+ * ============================================================================
+ */
+void Clear_Terminal(void);
 
-void Clear_Terminal( void ) ;
+/** ============================================================================
+ * @fn 				: Display_Menu
+ *
+ * @brief 			: This Function is Called When User Enters the System , It Displays the Menu to the User
+ *                    and Asks Him to Choose From the Following Options :
+ *                    1- Display Date & Time
+ * 				      2- Set Alarm
+ * 				      3- Set Date & Time
+ *
+ * @param[in]		: void
+ *
+ * @return 			: OPTIONS_t > Option Choosen by User ( 1-3 )
+ *
+ * @note			: This Function is Called Only Once When User Enters the System ( ID & Password are Correct )
+ * ============================================================================
+ */
+OPTIONS_t Display_Menu(void);
 
-OPTIONS_t Display_Menu( void ) ;
+/** ============================================================================
+ * @fn 				: SendNew_Line
+ *
+ * @brief 			: This Function is Used to Send New Line in Putty Terminal
 
-void SendNew_Line( void ) ;
+ * @param[in]		: void
+ *
+ * @return 			: void
+ *
+ * ============================================================================
+ */
+void SendNew_Line(void);
 
-ID_PASS_EQUALITY_t TryAgain ( uint8_t * ID_Ptr , uint8_t * Pass_Ptr ) ;
-
-void SPI_CallBackFunc( void ) ;
-
-void Check_LoginInfo( uint8_t * ID_Ptr , uint8_t * Pass_Ptr , uint8_t TriesNumber  ) ;
+/** ============================================================================
+ * @fn 				: Check_LoginInfo
+ *
+ * @brief 			: This Function is Called When User Enters the System ,
+ *                    It Checks on the ID & Password if ID is Equal to Password Inverted or Not
+ * 				      if ID is Equal to Password Inverted , User Enters the System ,
+ *                    if Not , User is Asked to Enter ID & Password Again Till he Finish His Number of Tries
+ *          	   	  if Number of Tries is Finished , SPI Data is Sent to Light Up the Red LED on BluePill Board,
+ *                    IN this Case   SPI Call Back Function is Called to Execute the Shutdown Sequence
+ *                    and the Program is Stuck in it
+ *
+ * @param[in]		:  uint8_t *ID_Ptr > Pointer to ID Array
+ * 					   uint8_t *Pass_Ptr > Pointer to Password Array
+ * 					   uint8_t TriesNumber > Number of Tries Allowed to User to Enter the System Before Shutting Down
+ *
+ * @return 			: void
+ * 					  This Function Never Returns
+ * ============================================================================
+ */
+void Check_LoginInfo(uint8_t *ID_Ptr, uint8_t *Pass_Ptr, uint8_t TriesNumber);
 
 /*=======================================================================================
  * @fn		 		:	ReadDateTime_FromPC
@@ -153,46 +167,58 @@ void Check_LoginInfo( uint8_t * ID_Ptr , uint8_t * Pass_Ptr , uint8_t TriesNumbe
  * @param			:	void
  * @retval			:	Error State
  * ======================================================================================*/
-Error_State_t ReadDateTime_FromPC(void) ;
+Error_State_t ReadDateTime_FromPC(void);
 
 /*==============================================================================================================================================
  *@fn      : void InterruptsInit (void)
  *@brief  :  This Function Is Responsible For Initializing The Interrupts
  *@retval void :
  *==============================================================================================================================================*/
-void Interrupts_Init( void ) ;
+void Interrupts_Init(void);
 
-/*=======================================================================================
- * @fn		 		:	FindDay
- * @brief			:	Find The Day given by the user
- * @param			:	Pointer to the Calender Array received from user
- * @retval			:	The Day received from the user
- * ======================================================================================*/
-static DS1307_DAYS_t FindDay(uint8_t * Calender);
+/** ============================================================================
+ * @fn 				: Check_IF_ContinueisNeeded
+ *
+ * @brief 			: This Function is Called When User Finishes His Functionality( Executing Choosin Option )
+ *                    and Asks Him if He Wants to Continue Choosing Options or Not
+ *
+ * @param[in]		: void
+ *
+ * @return 			: void
+ * 					  This Function Never Returns
+ * ============================================================================
+ */
+void Check_IF_ContinueisNeeded(void);
 
-void Check_IF_ContinueisNeeded( void );
+/** ============================================================================
+ * @fn 				: Wrong_OptionChoosen
+ *
+ * @brief 			: This Function is Called When User Passes Wrong Option to the System ,
+ *                    It Clears the Terminal & Display a Message to the User to Enter a Valid Option
+ *
+ * @param[in]		: void
+ *
+ * @return 			: void
+ * 					  This Function Never Returns
+ * ============================================================================
+ */
+void WRONG_OptionChoosen(void);
 
-/*=======================================================================================
- * @fn		 		:	Calculate_Calender
- * @brief			:	Translate The Calender given by the user from ASCII to Decimal values 
- * 						And save it in a structure which will be sent to RTC.
- * @param			:	Pointer to the Calender struct which will be sent to RTC
- * @param			:	Pointer to the Calender Array received from user
- * @retval			:	void
- * ======================================================================================*/	
-static void Calculate_Calender(DS1307_Config_t * Date_Time_To_RTC,uint8_t * Date_Time_From_USART);
-
-void WRONG_OptionChoosen ( void ) ;
-
-/*=======================================================================================
- * @fn		 		:	Check_Calender
- * @brief			:	Check The Calender given by the user
- * @param			:	Pointer to the Calender struct which will be sent to RTC
- * @retval			:	Error State
- * ======================================================================================*/
-static Error_State_t Check_Calender(DS1307_Config_t * Date_Time_To_RTC);
-
-void ShutDown_Sequence( void ) ;
+/** ============================================================================
+ * @fn 				: ShutDown_Sequence
+ *
+ * @brief 			: This Function is Called Inside Call Back Function of SPI ,
+ *                    When Number of Tries of User is Finished &
+ *                    RED_LED_CODE is Transmitted to the Blue Pill Board ,
+ *                    This Function is Called to Execute the Shutdown Sequence
+ *
+ * @param[in]		: void
+ *
+ * @return 			: void
+ *
+ * ============================================================================
+ */
+void ShutDown_Sequence(void);
 
 /*=======================================================================================
  * @fn		 		:	Reading_Time
@@ -210,30 +236,12 @@ void Reading_Time(void);
  * ======================================================================================*/
 void Transmit_Time(void);
 
-void SPI_CALL_BACK(void);
-
 /*==============================================================================================================================================
  *@fn      : void SetAlarm()
  *@brief  :  This Function Is Responsible For Setting The Alarm Time
  *@retval void :
  *==============================================================================================================================================*/
 void SetAlarm();
-
-/*==============================================================================================================================================
- *@fn      : void SPI1_ISR()
- *@brief  :  This Function Is The ISR For The SPI1 Interrupt
- *@retval void :
- *==============================================================================================================================================*/
-void SPI1_ISR();
-
-
-
-/*==============================================================================================================================================
- *@fn      : void SysTickPeriodicISR()
- *@brief  :  This Function Is The ISR For The SYSTICK Interrupt
- *@retval void :
- *==============================================================================================================================================*/
-void SysTickPeriodicISR();
 
 /*==============================================================================================================================================
  *@fn      : void CalcAlarm(uint8_t AlarmNumber)
@@ -249,4 +257,37 @@ void CalcAlarm(uint8_t AlarmNumber);
  *@retval void :
  *==============================================================================================================================================*/
 void CompTime();
+
+/* ========================================================================= *
+ *                                 HANDLERS			                         *
+ * ========================================================================= */
+
+/*==============================================================================================================================================
+ *@fn      :  void SPI_CallBackFunc()
+ *@brief   :  SPI Call Back Function in Case of User Finishes His Number of Tries ,  Executes the Shutdown Sequence
+ *@retval  :  void
+ *==============================================================================================================================================*/
+void SPI_CallBackFunc(void);
+
+/*==============================================================================================================================================
+ *@fn      :  void SPI_CALL_BACK()
+ *@brief   :  Empty SPI Call Back Function in Case of User Choose Display Date & Time Option
+ *@retval  :  void
+ *==============================================================================================================================================*/
+void SPI_CALL_BACK(void);
+
+/*==============================================================================================================================================
+ *@fn      :  void SPI1_ISR()
+ *@brief   :  This Function Is ISR For SPI In Case Of Alarm is Triggered to Send Inside the Call Back , Pulse to the Blue Pill Board
+ *@retval  :  void
+ *==============================================================================================================================================*/
+void SPI1_ISR();
+
+/*==============================================================================================================================================
+ *@fn      : void SysTickPeriodicISR()
+ *@brief  :  This Function Is The ISR For The SYSTICK Interrupt , It Is Responsible For Calling The CompTime Function Every One Second
+ *@retval void :
+ *==============================================================================================================================================*/
+void SysTickPeriodicISR();
+
 #endif /* INC_SERVICE_H_ */
