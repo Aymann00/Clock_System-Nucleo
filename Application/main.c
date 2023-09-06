@@ -45,8 +45,11 @@
 /* ========================================================================= *
  *                        GLOBAL VARIABLES SECTION                           *
  * ========================================================================= */
+
+/*Structure to Save The date and Time and send it to RTC*/
 extern DS1307_Config_t Date_Time_RTC ;
 
+/*I2C Configurations Pointer*/
 extern I2C_Configs_t * I2C_CONFIG	;
 
 extern uint8_t ReadingArr[ ] ;
@@ -133,7 +136,7 @@ int main(void)
 			{
 				/*Read the settled time and date from PC terminal*/
 				Receiving_State		=	ReadDateTime_FromPC();
-				/*Check The Error State*/
+				/*Check The Received Date & Time*/
 				if (OK == Receiving_State)
 				{
 
