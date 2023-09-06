@@ -56,7 +56,7 @@ SPI_CONFIGS_t * SPI_CONFIG ;
 /*I2C Configurations Pointer*/
 I2C_Configs_t * I2C_CONFIG ;
 
-
+/*RTC Configurations Pointer*/
 DS1307_Config_t *ReadingStruct ;
 
 
@@ -716,12 +716,24 @@ static Error_State_t Check_Calender(DS1307_Config_t * Date_Time_To_RTC)
 	return Error_State ;
 }
 
+/*=======================================================================================
+ * @fn		 		:	Transmit_Time
+ * @brief			:	Transmit Buffer of data via SPI (with interrupt)
+ * @param			:	void
+ * @retval			:	void
+ * ======================================================================================*/
 void Transmit_Time(void)
 {
 	/* Transmit Time Via SPI */
 	SPI_Transmit_IT(SPI_CONFIG, ReadingArr , 30 , SPI_CALL_BACK ) ;
 }
 
+/*=======================================================================================
+ * @fn		 		:	Reading_Time
+ * @brief			:	Reading data from RTC and store data in Reading Array
+ * @param			:	void
+ * @retval			:	void
+ * ======================================================================================*/
 void Reading_Time(void)
 {
 	/* Read Date & Time */
