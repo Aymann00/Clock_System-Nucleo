@@ -27,18 +27,20 @@
 #define FIRST_TIME				1u
 #define NOT_FIRST_TIME			0u
 #define CALENDER_FORMAT			23u
-#define CLEAR_TERMINAL    "\033\143"
+#define CLEAR_TERMINAL    		"\033\143"
 
-#define DELAY_1s()          for (uint16_t n = 1000 ; n > 0 ; n-- )\
-		for (uint16_t y = 0 ; y < 3195 ; y++ )
+#define DELAY_1s()          	for (uint16_t n = 1000 ; n > 0 ; n-- )\
+								for (uint16_t y = 0 ; y < 3195 ; y++ )
 
-#define DELAY_500ms()    for (uint16_t n = 500 ; n > 0 ; n-- )\
-		for (uint16_t i = 0 ; i < 3195 ; i++ )
+#define DELAY_500ms()    		for (uint16_t n = 500 ; n > 0 ; n-- )\
+								for (uint16_t i = 0 ; i < 3195 ; i++ )
 
-#define ZERO_ASCII      48
+#define ZERO_ASCII      		48
 
-#define RED_LED_CODE   0x39
-#define DISPLAY_CODE   0x41
+#define RED_LED_CODE  			0x39
+#define DISPLAY_CODE   			0x41
+#define ALARMCODE               100
+
 #define FIRST_LETTER_OF_DAY		10u
 #define SECOND_LETTER_OF_DAY	11u
 #define THIRD_LETTER_OF_DAY		12u
@@ -51,7 +53,7 @@
 #define MAX_MONTH				12u
 #define MAX_YEAR				99u
 
-#define ALARMCODE               100
+
 
 
 #define Filling                 {{0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, { 0xFF, 0xFF, 0xFF }}
@@ -83,14 +85,46 @@ typedef enum
 /* ========================================================================= *
  *                      FUNCTIONS PROTOTYPES SECTION                         *
  * ========================================================================= */
+
+/*=======================================================================================
+ * @fn		 		:	Clock_Init
+ * @brief			:	Enable The Pripherals Clocks
+ * @param			:	void
+ * @retval			:	void
+ * ======================================================================================*/
 void Clock_Init( void ) ;
 
+/*=======================================================================================
+ * @fn		 		:	Pins_Init
+ * @brief			:	Set The Pins Configurations
+ * @param			:	void
+ * @retval			:	void
+ * ======================================================================================*/
 void Pins_Init( void ) ;
 
+
+/*=======================================================================================
+ * @fn		 		:	USART2_Init
+ * @brief			:	Initialize USART2
+ * @param			:	void
+ * @retval			:	void
+ * ======================================================================================*/
 void USART2_Init ( void ) ;
 
+/*=======================================================================================
+ * @fn		 		:	SPI1_Init
+ * @brief			:	Initialize SPI1
+ * @param			:	void
+ * @retval			:	void
+ * ======================================================================================*/
 void SPI1_Init( void ) ;
 
+/*=======================================================================================
+ * @fn		 		:	I2C1_Init
+ * @brief			:	Initialize I2C1
+ * @param			:	void
+ * @retval			:	void
+ * ======================================================================================*/	
 void I2C1_Init( void );
 
 uint8_t * ID_Reception( void ) ;
@@ -113,6 +147,12 @@ void SPI_CallBackFunc( void ) ;
 
 void Check_LoginInfo( uint8_t * ID_Ptr , uint8_t * Pass_Ptr , uint8_t TriesNumber  ) ;
 
+/*=======================================================================================
+ * @fn		 		:	ReadDateTime_FromPC
+ * @brief			:	Read Date & Time From The user Via USART
+ * @param			:	void
+ * @retval			:	Error State
+ * ======================================================================================*/
 Error_State_t ReadDateTime_FromPC(void) ;
 
 /*==============================================================================================================================================
@@ -122,14 +162,34 @@ Error_State_t ReadDateTime_FromPC(void) ;
  *==============================================================================================================================================*/
 void Interrupts_Init( void ) ;
 
+/*=======================================================================================
+ * @fn		 		:	FindDay
+ * @brief			:	Find The Day given by the user
+ * @param			:	Pointer to the Calender Array received from user
+ * @retval			:	The Day received from the user
+ * ======================================================================================*/
 static DS1307_DAYS_t FindDay(uint8_t * Calender);
 
 void Check_IF_ContinueisNeeded( void );
 
+/*=======================================================================================
+ * @fn		 		:	Calculate_Calender
+ * @brief			:	Translate The Calender given by the user from ASCII to Decimal values 
+ * 						And save it in a structure which will be sent to RTC.
+ * @param			:	Pointer to the Calender struct which will be sent to RTC
+ * @param			:	Pointer to the Calender Array received from user
+ * @retval			:	void
+ * ======================================================================================*/	
 static void Calculate_Calender(DS1307_Config_t * Date_Time_To_RTC,uint8_t * Date_Time_From_USART);
 
 void WRONG_OptionChoosen ( void ) ;
 
+/*=======================================================================================
+ * @fn		 		:	Check_Calender
+ * @brief			:	Check The Calender given by the user
+ * @param			:	Pointer to the Calender struct which will be sent to RTC
+ * @retval			:	Error State
+ * ======================================================================================*/
 static Error_State_t Check_Calender(DS1307_Config_t * Date_Time_To_RTC);
 
 void ShutDown_Sequence( void ) ;

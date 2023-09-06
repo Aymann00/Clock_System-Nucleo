@@ -44,13 +44,18 @@
 
 uint8_t ReadingArr[30]={ 0 } ;
 
+/*UART Configurations Pointer*/
 UART_Config_t * UART_CONFIG ;
 
+/*Structure to Save The date and Time and send it to RTC*/
 DS1307_Config_t Date_Time_RTC ;
 
+/*SPI Configurations Pointer*/
 SPI_CONFIGS_t * SPI_CONFIG ;
 
+/*I2C Configurations Pointer*/
 I2C_Configs_t * I2C_CONFIG ;
+
 
 DS1307_Config_t *ReadingStruct ;
 
@@ -63,6 +68,8 @@ uint8_t AlarmName[30] = {0};
 
 /* Counter To Store The Alarm Name Length */
 uint8_t AlarmNameCounter = 0;
+
+
 /* ========================================================================= *
  *                    FUNCTIONS IMPLEMENTATION SECTION                       *
  * ========================================================================= */
@@ -343,6 +350,12 @@ uint8_t * Pass_Reception( void )
 
 }
 
+/*=======================================================================================
+ * @fn		 		:	Clock_Init
+ * @brief			:	Enable The Pripherals Clocks
+ * @param			:	void
+ * @retval			:	void
+ * ======================================================================================*/
 void Clock_Init( void )
 {
 	/* Enable USART2 Clock */
@@ -362,6 +375,12 @@ void Clock_Init( void )
 
 }
 
+/*=======================================================================================
+ * @fn		 		:	Pins_Init
+ * @brief			:	Set The Pins Configurations
+ * @param			:	void
+ * @retval			:	void
+ * ======================================================================================*/
 void Pins_Init( void )
 {
 	/* USART2 GPIO Pins Configuration Working in Full Duplex */
@@ -431,6 +450,12 @@ void Pins_Init( void )
 
 }
 
+/*=======================================================================================
+ * @fn		 		:	USART2_Init
+ * @brief			:	Initialize USART2
+ * @param			:	void
+ * @retval			:	void
+ * ======================================================================================*/
 void USART2_Init ( void )
 {
 	/* USART2 Interrupts Configuration */
@@ -455,6 +480,11 @@ void USART2_Init ( void )
 
 }
 
+/*==============================================================================================================================================
+ *@fn      : void InterruptsInit (void)
+ *@brief  :  This Function Is Responsible For Initializing The Interrupts
+ *@retval void :
+ *==============================================================================================================================================*/
 void Interrupts_Init( void )
 {
 	NVIC_EnableIRQ( SPI1_IRQ ) ;
@@ -470,6 +500,12 @@ void Interrupts_Init( void )
 
 }
 
+/*=======================================================================================
+ * @fn		 		:	SPI1_Init
+ * @brief			:	Initialize SPI1
+ * @param			:	void
+ * @retval			:	void
+ * ======================================================================================*/
 void SPI1_Init( void )
 {
 	/* SPI1 Configuration */
@@ -488,6 +524,12 @@ void SPI1_Init( void )
 	SPI_CONFIG = &SPI1Config ;
 }
 
+/*=======================================================================================
+ * @fn		 		:	I2C1_Init
+ * @brief			:	Initialize I2C1
+ * @param			:	void
+ * @retval			:	void
+ * ======================================================================================*/
 void I2C1_Init( void ){
 
 	/*I2C1 Configurations*/
@@ -522,27 +564,43 @@ void ShutDown_Sequence( void )
 
 	while(1) ;
 }
+
+/*=======================================================================================
+ * @fn		 		:	ReadDateTime_FromPC
+ * @brief			:	Read Date & Time From The user Via USART
+ * @param			:	void
+ * @retval			:	Error State
+ * ======================================================================================*/
 Error_State_t ReadDateTime_FromPC(void)
 {
+	/*Error State Variable to check if the functionality is done successfully or not*/
 	Error_State_t Error_State = OK;
 
+	/*Array to store the Date and Time Received from the user*/
 	uint8_t Date_Time_USART[CALENDER_FORMAT] = {0};
 
+	/*Variable to check if this is the first time to enter this function or not*/
 	static uint8_t First_Time_Flag 	=	FIRST_TIME;
 
+	/*Check if this is the first time to enter this function or not*/
 	if (First_Time_Flag == FIRST_TIME)
 	{
+		/*Display message to user that he is in the Set Date and Time Mode*/
 		USART_SendStringPolling(UART_2,  "\nWELCOME To Set Date and Time Mode\n");
+		/*Change the flag to not enter this if statement again*/
 		First_Time_Flag		=	NOT_FIRST_TIME	;
 	}
+	/*Display message to user that he should enter the Date and Time in the following form*/
 	USART_SendStringPolling(UART_2,  "Enter the Date And time in the Following Form\n");
 	USART_SendStringPolling(UART_2,  "yy-mm-dd (First 3 Letters of Day Name) HH:MM:SS\n");
-	for (uint8_t Local_Counter=0	;	Local_Counter<23	;	Local_Counter++)
+
+	/*Receive the Date and Time from the user*/
+	for (uint8_t Local_Counter=0	;	Local_Counter<CALENDER_FORMAT	;	Local_Counter++)
 	{
 		Date_Time_USART[Local_Counter] = UART_u16Receive(UART_CONFIG);
 		UART_voidTransmitData(UART_CONFIG, Date_Time_USART[Local_Counter]);
 	}
-	/*Find calender Values to be send to RTC*/
+	/*Calculate calender Values to be send to RTC*/
 	Calculate_Calender(&Date_Time_RTC , Date_Time_USART);
 
 	/*Estimate the Day Name*/
@@ -559,11 +617,19 @@ Error_State_t ReadDateTime_FromPC(void)
 
 	return Error_State ;
 }
+
+/*=======================================================================================
+ * @fn		 		:	FindDay
+ * @brief			:	Find The Day given by the user
+ * @param			:	Pointer to the Calender Array received from user
+ * @retval			:	The Day received from the user
+ * ======================================================================================*/
 static DS1307_DAYS_t FindDay(uint8_t * Calender)
 {
+	/*Variable to store the Day*/
 	DS1307_DAYS_t Day = 0;
 
-	/*Check the 3 Letters*/
+	/*Check the 3 Given Letters*/
 	if ((('S'==Calender[FIRST_LETTER_OF_DAY]) || ('s'==Calender[FIRST_LETTER_OF_DAY]))&&(('A'==Calender[SECOND_LETTER_OF_DAY]) || ('a'==Calender[SECOND_LETTER_OF_DAY]))&&(('T'==Calender[THIRD_LETTER_OF_DAY]) || ('t'==Calender[THIRD_LETTER_OF_DAY])))
 	{
 		/*First 3 letters are SAT so the day is Saturday*/
@@ -604,8 +670,18 @@ static DS1307_DAYS_t FindDay(uint8_t * Calender)
 		/*Wrong Day*/
 		Day	=	WRONG_DAY;
 	}
+	/*Return the Day*/
 	return Day ;
 }
+
+/*=======================================================================================
+ * @fn		 		:	Calculate_Calender
+ * @brief			:	Translate The Calender given by the user from ASCII to Decimal values 
+ * 						And save it in a structure which will be sent to RTC.
+ * @param			:	Pointer to the Calender struct which will be sent to RTC
+ * @param			:	Pointer to the Calender Array received from user
+ * @retval			:	void
+ * ======================================================================================*/	
 static void Calculate_Calender(DS1307_Config_t * Date_Time_To_RTC,uint8_t * Date_Time_From_USART)
 {
 	/*Calculate The Date*/
@@ -619,9 +695,17 @@ static void Calculate_Calender(DS1307_Config_t * Date_Time_To_RTC,uint8_t * Date
 	Date_Time_To_RTC->Seconds 	= (((Date_Time_From_USART[21]-ZERO_ASCII) *10)+(Date_Time_From_USART[22]-ZERO_ASCII));
 
 }
+
+/*=======================================================================================
+ * @fn		 		:	Check_Calender
+ * @brief			:	Check The Calender given by the user
+ * @param			:	Pointer to the Calender struct which will be sent to RTC
+ * @retval			:	Error State
+ * ======================================================================================*/
 static Error_State_t Check_Calender(DS1307_Config_t * Date_Time_To_RTC)
 {
 	Error_State_t Error_State = OK;
+	/*Check if the Date and Time are in the Acceptable Range*/
 	if (	(Date_Time_To_RTC->Date>MAX_DATE) 	|| 	(Date_Time_To_RTC->Day==WRONG_DAY)
 			||(Date_Time_To_RTC->Hours>MAX_HOURS)	||	(Date_Time_To_RTC->Minutes>MAX_MINUTES)
 			||(Date_Time_To_RTC->Month >MAX_MONTH) || 	(Date_Time_To_RTC->Seconds>MAX_SECONDS)
