@@ -110,8 +110,12 @@ int main(void)
 	 */
 	Check_LoginInfo(ID_Ptr, Pass_Ptr, NUM_OF_TRIES);
 
+
+
 	while (1)
 	{
+		/* System Login is Initiated Successfully */
+
 		/* Display the Menu of Options if Login Info is Correct
 		 * Else Stuck in the Call Back Function
 		 */

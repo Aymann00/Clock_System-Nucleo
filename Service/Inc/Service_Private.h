@@ -30,6 +30,7 @@
 
 #define RED_LED_CODE 0x39
 #define DISPLAY_CODE 0x41
+#define GREEN_LED_CODE 0x44
 #define ALARMCODE 100
 
 #define FIRST_LETTER_OF_DAY 10u

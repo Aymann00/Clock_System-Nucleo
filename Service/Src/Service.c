@@ -45,6 +45,7 @@
 
 /* Variable to Send Via SPI Data in More than Case :
    1- Number of Tries of User is Finished
+   2- System Login is Successfully Initiated
    2- Alarm is Triggered
    3- Display Date & Time
 */
@@ -239,6 +240,8 @@ void Check_LoginInfo(uint8_t *ID_Ptr, uint8_t *Pass_Ptr, uint8_t TriesNumber)
 	{
 		/* Loop is Terminated Because ID is Equal to Password Inverted */
 		/* Number of Tries Not Finished */
+		/* Send a Signal to Turn on Green LED on Panda board*/
+		SendGreenSignal( ) ;
 	}
 }
 
@@ -871,6 +874,18 @@ void SetAlarm()
 		SetAlarm();
 	}
 }
+
+/*==============================================================================================================================================
+ *@fn      :  void SendGreenSignal()
+ *@brief  :   This Function Is Responsible For Sending a Signal to Panda Board when System Login is Completed
+ *@retval void :
+ *==============================================================================================================================================*/
+void SendGreenSignal( void )
+{
+	ReadingArr[0] = GREEN_LED_CODE ;
+	SPI_Transmit_IT(SPI_CONFIG, ReadingArr , 30 , SPI_CALL_BACK) ;
+}
+
 /* ============================================================================*
  * 								Private Functions							   *
  * ============================================================================*/
@@ -1080,7 +1095,7 @@ static uint8_t *InvertPass(uint8_t *Arr, uint8_t ArrSize)
 /* ============================================================================*
  * 								ISRs  										   *
  * ============================================================================*/
-/* Unused Call Back Function of SPI , When Transmitting Data to Display */
+/* Unused Call Back Function of SPI , When Transmitting Data to Display  & when Transmitting Green Led Signal */
 void SPI_CALL_BACK(void)
 {
 }
